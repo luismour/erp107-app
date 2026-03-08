@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Youth {
+  id        String   @id @default(uuid())
+  name      String
+  age       Int
+  branch    String
+  createdAt DateTime @default(now())
+
+  guardians Guardian[]
+  fees      Fee[]
+}
+
+model Guardian {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String
+  createdAt DateTime @default(now())
+
+  youthId String
+  youth   Youth @relation(fields: [youthId], references: [id], onDelete: Cascade)
+}
+
+model Fee {
+  id        String   @id @default(uuid())
+  month     Int
+  year      Int
+  amount    Float
+  status    String
+  dueDate   DateTime
+  createdAt DateTime @default(now())
+
+  youthId String
+  youth   Youth @relation(fields: [youthId], references: [id], onDelete: Cascade)
+}

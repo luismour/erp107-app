@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========================= */
+/* Variáveis do Sistema */
+/* ========================= */
+
+:root {
+
+  /* Cores principais */
+
+  --color-primary: #166534;
+  --color-primary-light: #22c55e;
+
+  /* Superfícies */
+
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+
+  /* Texto */
+
+  --color-text: #1f2937;
+
+  /* Bordas */
+
+  --color-border: #e5e7eb;
+
+}
+
+/* ========================= */
+/* Tema escuro */
+/* ========================= */
+
+@media (prefers-color-scheme: dark) {
+
+  :root {
+
+    --color-background: #0f172a;
+    --color-surface: #1e293b;
+
+    --color-text: #f1f5f9;
+
+    --color-border: #334155;
+
+  }
+
+}
+
+/* ========================= */
+/* Estilos globais */
+/* ========================= */
+
+body {
+
+  background: var(--color-background);
+  color: var(--color-text);
+
+  font-family: system-ui, -apple-system, sans-serif;
+
+}
+
+/* ========================= */
+/* Componentes reutilizáveis */
+/* ========================= */
+
+.card {
+
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+
+  border-radius: 12px;
+
+}
+
+.btn-primary {
+
+  background: var(--color-primary);
+  color: white;
+
+  padding: 8px 16px;
+  border-radius: 8px;
+
+  transition: 0.2s;
+
+}
+
+.btn-primary:hover {
+
+  background: var(--color-primary-light);
+
+}
