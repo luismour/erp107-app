@@ -39,7 +39,7 @@ export async function GET() {
       }
     })
 
-    const formattedFees = fees.map((fee) => ({
+    const formattedFees = fees.map((fee: any) => ({
       id: fee.id,
       youth_name: fee.youth.name,
       month: fee.month,
