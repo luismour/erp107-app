@@ -3,13 +3,12 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const youth = await prisma.youth.findUnique({
-      where: {
-        id: params.id
-      },
+      where: { id },
       include: {
         guardians: true,
         fees: true
@@ -22,50 +21,47 @@ export async function GET(
 
     return NextResponse.json(youth)
   } catch (error) {
-    console.error("Erro ao procurar jovem:", error);
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })
   }
 }
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json()
 
+    const updateData: any = {}
+    if (body.name) updateData.name = body.name
+    if (body.age) updateData.age = Number(body.age)
+    if (body.branch) updateData.branch = body.branch
+
     const youth = await prisma.youth.update({
-      where: {
-        id: params.id
-      },
-      data: {
-        name: body.name,
-        age: body.age ? Number(body.age) : undefined, 
-        branch: body.branch 
-      }
+      where: { id },
+      data: updateData
     })
 
     return NextResponse.json(youth)
   } catch (error) {
-    console.error("Erro ao atualizar jovem:", error);
     return NextResponse.json({ error: "Erro ao atualizar jovem" }, { status: 500 })
   }
 }
 
+
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await prisma.youth.delete({
-      where: {
-        id: params.id
-      }
+      where: { id }
     })
 
     return NextResponse.json({ message: "Jovem removido" })
   } catch (error) {
-    console.error("Erro ao remover jovem:", error);
     return NextResponse.json({ error: "Erro ao remover jovem" }, { status: 500 })
   }
 }

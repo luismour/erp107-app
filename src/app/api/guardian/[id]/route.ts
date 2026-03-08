@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: Request, 
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const updateData: any = {};
     
@@ -10,7 +14,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     if (body.phone) updateData.phone = body.phone;
 
     const guardian = await prisma.guardian.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData
     });
 
@@ -20,10 +24,14 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: Request, 
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     await prisma.guardian.delete({
-      where: { id: params.id }
+      where: { id }
     });
     return NextResponse.json({ message: "Responsável removido com sucesso" });
   } catch (error) {
