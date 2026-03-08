@@ -4,91 +4,67 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ========================= */
-/* Variáveis do Sistema */
-/* ========================= */
-
 :root {
-
-  /* Cores principais */
-
-  --color-primary: #166534;
-  --color-primary-light: #22c55e;
-
-  /* Superfícies */
-
-  --color-background: #f8fafc;
+  /* Tons verdes mais modernos (estilo Vercel/Stripe) */
+  --color-primary: #10b981; /* Emerald 500 */
+  --color-primary-dark: #059669; /* Emerald 600 */
+  
+  /* Superfícies mais limpas */
+  --color-background: #f8fafc; /* Slate 50 */
   --color-surface: #ffffff;
-
-  /* Texto */
-
-  --color-text: #1f2937;
-
-  /* Bordas */
-
-  --color-border: #e5e7eb;
-
+  
+  /* Texto com melhor hierarquia */
+  --color-text: #0f172a; /* Slate 900 */
+  --color-text-muted: #64748b; /* Slate 500 */
+  
+  --color-border: #e2e8f0; /* Slate 200 */
 }
-
-/* ========================= */
-/* Tema escuro */
-/* ========================= */
 
 @media (prefers-color-scheme: dark) {
-
   :root {
-
-    --color-background: #0f172a;
-    --color-surface: #1e293b;
-
-    --color-text: #f1f5f9;
-
-    --color-border: #334155;
-
+    --color-background: #0f172a; /* Slate 900 */
+    --color-surface: #1e293b; /* Slate 800 */
+    --color-text: #f8fafc; /* Slate 50 */
+    --color-text-muted: #94a3b8; /* Slate 400 */
+    --color-border: #334155; /* Slate 700 */
   }
-
 }
-
-/* ========================= */
-/* Estilos globais */
-/* ========================= */
 
 body {
-
   background: var(--color-background);
   color: var(--color-text);
-
-  font-family: system-ui, -apple-system, sans-serif;
-
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* ========================= */
-/* Componentes reutilizáveis */
-/* ========================= */
-
+/* Componentes Modernos */
 .card {
-
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-
-  border-radius: 12px;
-
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  transition: box-shadow 0.2s ease-in-out;
 }
 
 .btn-primary {
-
   background: var(--color-primary);
   color: white;
-
-  padding: 8px 16px;
+  padding: 0.5rem 1.25rem;
   border-radius: 8px;
-
-  transition: 0.2s;
-
+  font-weight: 500;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
 
-  background: var(--color-primary-light);
-
+.btn-primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
