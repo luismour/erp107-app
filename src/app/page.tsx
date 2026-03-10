@@ -63,7 +63,7 @@ export default function HomePage() {
           <ShieldCheck size={14} /> Acesso Administrativo
         </div>
         <h1 className="text-5xl md:text-6xl font-black text-white italic uppercase tracking-tighter mb-4">
-          Portal do <span className="text-emerald-500">107º Grupo</span>
+          Portal do <span className="text-emerald-500">107º GEPR</span>
         </h1>
         <p className="text-slate-400 text-sm md:text-base font-medium leading-relaxed">
           Bem-vindo ao sistema de gestão integrada do Grupo Escoteiro Padre Roma. 

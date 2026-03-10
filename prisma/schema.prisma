@@ -46,7 +46,15 @@ model FundTransaction {
   youthId     String
   youth       Youth    @relation(fields: [youthId], references: [id], onDelete: Cascade)
   amount      Float
-  description String   // Ex: "Venda de Rifa de Páscoa", "Doação"
-  type        String   @default("credit") // "credit" (Entrada) ou "debit" (Saída/Uso)
+  description String   
+  type        String   @default("credit")
   createdAt   DateTime @default(now())
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String   
+  createdAt DateTime @default(now())
 }
