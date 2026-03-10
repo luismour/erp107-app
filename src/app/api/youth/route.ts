@@ -1,12 +1,17 @@
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
-
+import { sanitizePhone } from "@/lib/utils"
 
 export async function GET() {
   try {
     const youths = await prisma.youth.findMany({
       orderBy: {
         createdAt: 'desc' 
+      },
+      include: {
+        guardians: true,
+        fees: true,
+        funds: true
       }
     });
 
@@ -21,6 +26,8 @@ export async function POST(req: Request) {
   try {
     const body = await req.json()
 
+    const cleanPhone = sanitizePhone(body.guardianPhone);
+
     const youth = await prisma.youth.create({
       data: {
         name: body.name,
@@ -29,7 +36,7 @@ export async function POST(req: Request) {
         guardians: {
           create: {
             name: body.guardianName,
-            phone: body.guardianPhone
+            phone: cleanPhone 
           }
         }
       }

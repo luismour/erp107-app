@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -10,18 +11,17 @@ export async function GET(
     const youth = await prisma.youth.findUnique({
       where: { id },
       include: {
-        guardians: true,
-        fees: true
+        guardians: true, 
+        fees: {
+          orderBy: { dueDate: 'desc' } 
+        }
       }
     })
 
-    if (!youth) {
-      return NextResponse.json({ error: "Jovem não encontrado" }, { status: 404 })
-    }
-
-    return NextResponse.json(youth)
+    if (!youth) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
+    return NextResponse.json(youth);
   } catch (error) {
-    return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })
+    return NextResponse.json({ error: "Erro no servidor" }, { status: 500 });
   }
 }
 

@@ -15,6 +15,7 @@ model Youth {
 
   guardians Guardian[]
   fees      Fee[]
+  funds       FundTransaction[]
 }
 
 model Guardian {
@@ -38,4 +39,14 @@ model Fee {
 
   youthId String
   youth   Youth @relation(fields: [youthId], references: [id], onDelete: Cascade)
+}
+
+model FundTransaction {
+  id          String   @id @default(uuid())
+  youthId     String
+  youth       Youth    @relation(fields: [youthId], references: [id], onDelete: Cascade)
+  amount      Float
+  description String   // Ex: "Venda de Rifa de Páscoa", "Doação"
+  type        String   @default("credit") // "credit" (Entrada) ou "debit" (Saída/Uso)
+  createdAt   DateTime @default(now())
 }

@@ -1,56 +1,161 @@
-"use client" // Necessário para usar hooks do Next.js
+"use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Users, UsersRound, ReceiptText, Tent } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Wallet } from "lucide-react" 
+import { 
+  Home, 
+  PieChart, 
+  CreditCard, 
+  Users, 
+  UserCheck, 
+  Menu, 
+  X, 
+  Bell, 
+  Tent 
+} from "lucide-react"
 
-export default function Sidebar() {
+export default function Sidebar({ children }: { children: React.ReactNode }) {
+  const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
 
+  useEffect(() => {
+    if (isOpen) document.body.style.overflow = 'hidden'
+    else document.body.style.overflow = 'unset'
+  }, [isOpen])
+
   const navItems = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Jovens", href: "/jovens", icon: Users },
-    { name: "Responsáveis", href: "/responsaveis", icon: UsersRound },
-    { name: "Mensalidades", href: "/mensalidades", icon: ReceiptText },
-  ]
+  { name: "Início", href: "/", icon: Home },
+  { name: "Dashboard", href: "/dashboard", icon: PieChart },
+  { name: "Caixa Individual", href: "/caixa", icon: Wallet }, 
+  { name: "Mensalidades", href: "/mensalidades", icon: CreditCard },
+  { name: "Jovens", href: "/jovens", icon: Users },
+  { name: "Responsáveis", href: "/responsaveis", icon: UserCheck },
+]
+  const NavLinks = ({ mobile = false }) => (
+    <div className="flex flex-col gap-2 w-full mt-6">
+      {navItems.map((item) => {
+        const isActive = pathname === item.href
+
+        return (
+          <Link href={item.href} key={item.name} onClick={() => mobile && setIsOpen(false)}>
+            <div className={`relative flex items-center gap-4 px-6 py-4 rounded-2xl transition-all group cursor-pointer overflow-hidden ${isActive ? 'text-emerald-500 font-black' : 'text-slate-400 hover:text-slate-200 font-bold'}`}>
+              
+              {isActive && (
+                <motion.div
+                  layoutId={mobile ? "activeTabMobile" : "activeTabDesktop"}
+                  className="absolute inset-0 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
+              <motion.div 
+                className="relative z-10"
+                whileHover={{ scale: 1.1, rotate: isActive ? 0 : -5 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
+                <item.icon size={20} className={isActive ? "text-emerald-500" : "text-slate-500 group-hover:text-emerald-500 transition-colors"} />
+              </motion.div>
+              
+              <span className="relative z-10 text-xs uppercase tracking-widest">{item.name}</span>
+            </div>
+          </Link>
+        )
+      })}
+    </div>
+  )
 
   return (
-    <aside className="w-64 min-h-screen border-r bg-surface border-[var(--color-border)] p-6 flex flex-col">
-      {/* Logótipo / Cabeçalho */}
-      <div className="mb-10 flex items-center gap-3">
-        <div className="p-2 bg-emerald-100 dark:bg-emerald-900 rounded-lg text-emerald-600 dark:text-emerald-400">
-          <Tent size={24} />
+    <div className="flex min-h-screen bg-[#0f172a] selection:bg-emerald-500/30">
+      
+      <aside className="hidden md:flex flex-col w-72 bg-[#1a1f2e] border-r border-slate-800 fixed h-full z-40">
+        <div className="p-8 flex items-center gap-4 border-b border-slate-800/50">
+          <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+            <Tent size={24} />
+          </div>
+          <div>
+            <h1 className="text-white font-black italic tracking-tighter text-xl leading-none">Grupo 107º</h1>
+            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">Padre Roma</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-lg font-bold leading-tight">Grupo 107º</h2>
-          <p className="text-xs text-muted-foreground" style={{ color: "var(--color-text-muted)" }}>
-            Padre Roma - Finanças
-          </p>
+        
+        <div className="flex-1 px-4 py-6 overflow-y-auto">
+          <p className="px-6 text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4">Menu Principal</p>
+          <NavLinks />
         </div>
+
+        <div className="p-6 border-t border-slate-800/50">
+          <div className="flex items-center gap-4 bg-[#0f172a] p-4 rounded-2xl border border-slate-800 cursor-pointer hover:border-slate-700 transition-colors">
+            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-black text-slate-400">T</div>
+            <div>
+              <p className="text-xs font-black text-white uppercase tracking-wider">Tesouraria</p>
+              <p className="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">Online</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <div className="flex-1 flex flex-col md:ml-72 transition-all duration-300">
+        <header className="md:hidden flex items-center justify-between p-4 bg-[#1a1f2e] border-b border-slate-800 sticky top-0 z-40">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500">
+               <Tent size={20} />
+             </div>
+             <h1 className="text-white font-black italic tracking-tighter text-lg">Grupo 107º</h1>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <button className="text-slate-400 hover:text-white transition-colors relative">
+              <Bell size={20} />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-[#1a1f2e]"></span>
+            </button>
+            <button onClick={() => setIsOpen(true)} className="p-2 bg-[#0f172a] border border-slate-800 rounded-xl text-slate-400 hover:text-white transition-colors">
+              <Menu size={20} />
+            </button>
+          </div>
+        </header>
+
+        <AnimatePresence>
+          {isOpen && (
+            <>
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsOpen(false)}
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 md:hidden"
+              />
+
+              <motion.div 
+                initial={{ x: "100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="fixed top-0 right-0 h-full w-[80%] max-w-sm bg-[#1a1f2e] border-l border-slate-800 shadow-2xl z-50 p-6 flex flex-col md:hidden"
+              >
+                <div className="flex justify-between items-center mb-8 pb-6 border-b border-slate-800">
+                  <div>
+                    <h2 className="text-white font-black italic tracking-tighter text-2xl">Menu</h2>
+                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-1">Navegação Rápida</p>
+                  </div>
+                  <button onClick={() => setIsOpen(false)} className="p-3 bg-[#0f172a] rounded-xl text-slate-400 hover:text-red-500 transition-colors">
+                    <X size={20} />
+                  </button>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto">
+                  <NavLinks mobile={true} />
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+        <main className="flex-1 p-2 md:p-6 w-full max-w-[100vw] overflow-x-hidden">
+          {children}
+        </main>
       </div>
-
-      {/* Navegação */}
-      <nav className="flex flex-col gap-2">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href
-          const Icon = item.icon
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                  : "hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-600 dark:text-gray-300"
-              }`}
-            >
-              <Icon size={18} />
-              {item.name}
-            </Link>
-          )
-        })}
-      </nav>
-    </aside>
+    </div>
   )
 }

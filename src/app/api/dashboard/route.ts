@@ -2,67 +2,39 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
 export async function GET() {
-
   try {
 
-    const fees = await prisma.fee.findMany({
-      include: {
-        youth: true
-      },
-      orderBy: {
-        createdAt: "desc"
-      },
-      take: 10
+    const totalArrecadado = await prisma.fee.aggregate({
+      where: { status: "paid" },
+      _sum: { amount: true }
     })
 
-    const paidFees = await prisma.fee.aggregate({
-      _sum: {
-        amount: true
-      },
-      where: {
-        status: "paid"
-      }
+    const totalPendente = await prisma.fee.aggregate({
+      where: { status: "pending" },
+      _sum: { amount: true }
     })
 
-    const pendingFees = await prisma.fee.aggregate({
-      _sum: {
-        amount: true
-      },
-      where: {
-        status: "pending"
-      }
-    })
-
-    const lateFees = await prisma.fee.count({
-      where: {
-        status: "late"
-      }
-    })
-
-    const formattedFees = fees.map((fee: any) => ({
-      id: fee.id,
-      youth_name: fee.youth.name,
-      month: fee.month,
-      status: fee.status,
-      amount: fee.amount
+    const contagemJovens = await prisma.youth.count()
+    
+    const ramos = ["Lobinho", "Escoteiro", "Sênior", "Pioneiro"]
+    const statsRamos = await Promise.all(ramos.map(async (ramo) => {
+      const valor = await prisma.fee.aggregate({
+        where: {
+          youth: { branch: ramo }
+        },
+        _sum: { amount: true }
+      })
+      return { name: ramo, value: valor._sum.amount || 0 }
     }))
 
     return NextResponse.json({
-      fees: formattedFees,
-      paid: paidFees._sum.amount || 0,
-      pending: pendingFees._sum.amount || 0,
-      late: lateFees
+      arrecadado: totalArrecadado._sum.amount || 0,
+      pendente: totalPendente._sum.amount || 0,
+      totalMembros: contagemJovens,
+      statsRamos
     })
-
   } catch (error) {
-
-    console.error(error)
-
-    return NextResponse.json(
-      { error: "Erro ao carregar dashboard" },
-      { status: 500 }
-    )
-
+    console.error("Erro Dashboard API:", error)
+    return NextResponse.json({ error: "Erro ao carregar dashboard" }, { status: 500 })
   }
-
 }

@@ -5,7 +5,11 @@ export async function GET() {
   try {
     const fees = await prisma.fee.findMany({
       include: {
-        youth: true 
+        youth: {
+          include: {
+            guardians: true
+          }
+        }
       },
       orderBy: {
         dueDate: 'desc' 

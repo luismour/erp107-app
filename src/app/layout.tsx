@@ -1,42 +1,28 @@
-import "./globals.css"
-import Sidebar from "@/components/Sidebar"
-import Navbar from "@/components/Navbar"
+import type { Metadata } from "next";
+import { Inter } from "next/font/google"; // ou a fonte que estiver usando
+import "./globals.css";
+import Sidebar from "@/components/Sidebar"; // O arquivo que acabamos de criar!
 
-export const metadata = {
-  title: "Gestão Financeira - 107º Grupo Escoteiro Padre Roma",
-  description: "Sistema de gerenciamento de mensalidades escoteiras",
-}
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "107º Grupo Escoteiro - Financeiro",
+  description: "Sistema de Gestão Financeira",
+};
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="pt-BR">
-      <body>
-
-        <div className="flex min-h-screen">
-
-          {/* Sidebar */}
-          <Sidebar />
-
-          {/* Área principal */}
-          <div className="flex flex-col flex-1">
-
-            {/* Navbar */}
-            <Navbar />
-
-            {/* Conteúdo */}
-            <main className="flex-1 p-8">
-              {children}
-            </main>
-
-          </div>
-
-        </div>
-
+      <body className={inter.className}>
+        {/* Envolvemos os 'children' com o nosso novo Sidebar */}
+        <Sidebar>
+          {children}
+        </Sidebar>
       </body>
     </html>
-  )
+  );
 }

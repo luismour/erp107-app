@@ -1,169 +1,191 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import DashboardCard from "@/components/DashboardCard"
-import { Loader2, PlusCircle } from "lucide-react"
+import { motion } from "framer-motion"
+import Link from "next/link"
+import { 
+  TrendingUp, 
+  Users, 
+  Clock, 
+  DollarSign, 
+  Loader2, 
+  ArrowUpRight,
+  ChevronRight,
+  Home,
+  Target
+} from "lucide-react"
 
-interface Fee {
-  id: string
-  youth_name: string
-  month: number
-  status: "paid" | "pending" | "late"
-  amount: number
-}
-
-// Utilitário para formatar moeda
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value)
-}
-
-export default function Dashboard() {
-  const [fees, setFees] = useState<Fee[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [stats, setStats] = useState({ paid: 0, pending: 0, late: 0 })
-
-  async function loadDashboard() {
-    setIsLoading(true)
-    try {
-      const response = await fetch("/api/dashboard")
-      const data = await response.json()
-      setFees(data.fees || [])
-      setStats({
-        paid: data.paid || 0,
-        pending: data.pending || 0,
-        late: data.late || 0,
-      })
-    } catch (error) {
-      console.error("Erro ao carregar dados:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  async function generateFees() {
-    const confirm = window.confirm("Deseja gerar as mensalidades deste mês?")
-    if (!confirm) return
-
-    setIsGenerating(true)
-    try {
-      await fetch("/api/generate-fees", { method: "POST" })
-      alert("Mensalidades geradas com sucesso!")
-      loadDashboard()
-    } catch (error) {
-      console.error("Erro ao gerar mensalidades:", error)
-      alert("Ocorreu um erro ao gerar as mensalidades.")
-    } finally {
-      setIsGenerating(false)
-    }
-  }
+export default function DashboardPage() {
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadDashboard()
+    fetch("/api/dashboard")
+      .then(res => res.json())
+      .then(d => {
+        setData(d)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
   }, [])
 
+  if (loading) return (
+    <div className="flex h-screen items-center justify-center bg-[#0f172a]">
+      <Loader2 className="animate-spin text-emerald-500" size={40} />
+    </div>
+  )
+
+  // Formatação profissional de moeda
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value || 0)
+  }
+
+  const totalGeral = (data?.arrecadado || 0) + (data?.pendente || 0)
+  const taxaLiquidacao = totalGeral > 0 ? ((data?.arrecadado / totalGeral) * 100).toFixed(1) : 0
+
+  const cards = [
+    { 
+      title: "Total Arrecadado", 
+      value: formatCurrency(data?.arrecadado), 
+      icon: <DollarSign />, 
+      color: "text-emerald-500", 
+      bg: "bg-emerald-500/10",
+      border: "group-hover:border-emerald-500/30"
+    },
+    { 
+      title: "Total Pendente", 
+      value: formatCurrency(data?.pendente), 
+      icon: <Clock />, 
+      color: "text-amber-500", 
+      bg: "bg-amber-500/10",
+      border: "group-hover:border-amber-500/30"
+    },
+    { 
+      title: "Efetivo Ativo", 
+      value: `${data?.totalMembros || 0} Jovens`, 
+      icon: <Users />, 
+      color: "text-blue-500", 
+      bg: "bg-blue-500/10",
+      border: "group-hover:border-blue-500/30"
+    },
+  ]
+
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      {/* Cabeçalho */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto min-h-screen">
+      
+      {/* HEADER COM BOTÃO HOME */}
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-[#1a1f2e] p-8 rounded-[32px] border border-slate-800 shadow-2xl">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard Financeiro</h1>
-          <p className="text-sm mt-1" style={{ color: "var(--color-text-muted)" }}>
-            Visão geral das mensalidades do grupo escoteiro.
+          <h1 className="text-4xl font-black text-white italic uppercase tracking-tighter">
+            Financeiro <span className="text-emerald-500">Overview</span>
+          </h1>
+          <p className="text-slate-500 font-bold text-[10px] uppercase tracking-[0.3em] mt-2">
+            Controle de Receitas • 107º Grupo Escoteiro Padre Roma
           </p>
         </div>
+        
+        <div className="flex items-center gap-4">
+          {/* BOTÃO PARA A ROTA INICIAL */}
+          <Link 
+            href="/" 
+            className="px-6 py-3 bg-[#0f172a] hover:bg-emerald-500/10 border border-slate-800 hover:border-emerald-500/50 text-slate-400 hover:text-emerald-500 rounded-2xl transition-all flex items-center gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg"
+          >
+            <Home size={16} /> Página Inicial
+          </Link>
 
-        <button 
-          onClick={generateFees} 
-          disabled={isGenerating}
-          className="btn-primary shadow-sm"
-        >
-          {isGenerating ? (
-            <Loader2 className="animate-spin" size={18} />
-          ) : (
-            <PlusCircle size={18} />
-          )}
-          {isGenerating ? "A gerar..." : "Gerar Mensalidades"}
-        </button>
-      </div>
+          <div className="hidden md:flex px-4 py-3 bg-[#0f172a] border border-slate-800 rounded-2xl items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Sistema Online</span>
+          </div>
+        </div>
+      </header>
 
-      {/* Cards de Estatísticas */}
+      {/* CARDS PRINCIPAIS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <DashboardCard 
-          title="Receita Recebida" 
-          value={formatCurrency(stats.paid)} 
-          className="border-l-4 border-l-emerald-500"
-        />
-        <DashboardCard 
-          title="A Receber (Pendentes)" 
-          value={formatCurrency(stats.pending)} 
-          className="border-l-4 border-l-amber-500"
-        />
-        <DashboardCard 
-          title="Em Atraso" 
-          value={`${stats.late} mensalidades`} 
-          className="border-l-4 border-l-red-500"
-        />
+        {cards.map((card, idx) => (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.1 }}
+            key={card.title}
+            className={`bg-[#1a1f2e] border border-slate-800 p-8 rounded-[32px] shadow-2xl relative overflow-hidden group transition-all duration-300 ${card.border}`}
+          >
+            <div className={`p-4 rounded-2xl w-fit ${card.bg} ${card.color} mb-6 transition-transform group-hover:scale-110 group-hover:rotate-3`}>
+              {card.icon}
+            </div>
+            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{card.title}</p>
+            <h2 className="text-3xl font-black text-white mt-2 italic tracking-tight">{card.value}</h2>
+            <ArrowUpRight className="absolute top-8 right-8 text-slate-800 group-hover:text-white transition-colors" size={20} />
+          </motion.div>
+        ))}
       </div>
 
-      {/* Tabela */}
-      <div className="card overflow-hidden">
-        <div className="p-6 border-b" style={{ borderColor: "var(--color-border)" }}>
-          <h2 className="text-lg font-semibold">Mensalidades Recentes</h2>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* PROGRESSO POR RAMO (Ocupa 2 colunas em telas grandes) */}
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="bg-[#1a1f2e] border border-slate-800 p-8 rounded-[32px] shadow-2xl lg:col-span-2"
+        >
+          <div className="flex justify-between items-center mb-8">
+            <h3 className="text-white font-black uppercase text-xs tracking-widest flex items-center gap-2">
+              <Target size={16} className="text-emerald-500" /> Receita por Ramo
+            </h3>
+            <ChevronRight className="text-slate-600" size={16} />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            {data?.statsRamos.map((ramo: any) => {
+              const porcentagem = totalGeral > 0 ? ((ramo.value / totalGeral) * 100) : 0;
+              return (
+                <div key={ramo.name} className="space-y-3 p-4 bg-[#0f172a] rounded-2xl border border-slate-800/50 hover:border-slate-700 transition-colors">
+                  <div className="flex justify-between items-end">
+                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{ramo.name}</span>
+                    <span className="text-sm font-black text-emerald-400 italic">{formatCurrency(ramo.value)}</span>
+                  </div>
+                  <div className="h-2 bg-[#1a1f2e] rounded-full overflow-hidden border border-slate-800">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${porcentagem}%` }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                      className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400"
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </motion.div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 dark:bg-slate-800/50 text-xs uppercase font-semibold" style={{ color: "var(--color-text-muted)" }}>
-              <tr>
-                <th className="px-6 py-4">Jovem</th>
-                <th className="px-6 py-4">Mês Referência</th>
-                <th className="px-6 py-4">Estado</th>
-                <th className="px-6 py-4 text-right">Valor</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y" style={{ borderColor: "var(--color-border)" }}>
-              {isLoading ? (
-                <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center">
-                    <Loader2 className="animate-spin mx-auto mb-2 text-emerald-500" size={24} />
-                    <p style={{ color: "var(--color-text-muted)" }}>A carregar dados...</p>
-                  </td>
-                </tr>
-              ) : fees.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center" style={{ color: "var(--color-text-muted)" }}>
-                    Nenhuma mensalidade encontrada.
-                  </td>
-                </tr>
-              ) : (
-                fees.map((fee) => (
-                  <tr key={fee.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/20 transition-colors">
-                    <td className="px-6 py-4 font-medium">{fee.youth_name}</td>
-                    <td className="px-6 py-4">{fee.month}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${
-                        fee.status === "paid" ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800" :
-                        fee.status === "pending" ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800" :
-                        "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800"
-                      }`}>
-                        {fee.status === "paid" && "Pago"}
-                        {fee.status === "pending" && "Pendente"}
-                        {fee.status === "late" && "Atrasado"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right font-medium">
-                      {formatCurrency(fee.amount)}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        {/* ANALISE DE LIQUIDAÇÃO */}
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="bg-gradient-to-br from-[#1a1f2e] to-[#0f172a] border border-slate-800 p-8 rounded-[32px] shadow-2xl flex flex-col justify-center items-center text-center relative overflow-hidden"
+        >
+          {/* Efeito de brilho de fundo */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl" />
+          
+          <div className="w-24 h-24 rounded-full bg-[#0f172a] flex items-center justify-center mb-6 border border-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+            <TrendingUp size={40} className="text-emerald-500" />
+          </div>
+          
+          <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Saúde do Caixa</h3>
+          
+          <div className="mt-6 p-4 bg-[#0f172a] border border-slate-800 rounded-2xl w-full">
+            <p className="text-4xl font-black text-emerald-500">{taxaLiquidacao}%</p>
+            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">Taxa de Liquidação</p>
+          </div>
+          
+          <p className="text-slate-400 text-xs mt-6 leading-relaxed">
+            Mantenha a taxa de liquidação acima de 80% para garantir a sustentabilidade das atividades do grupo.
+          </p>
+        </motion.div>
+        
       </div>
     </div>
   )
