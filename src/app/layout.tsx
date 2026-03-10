@@ -1,28 +1,38 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google"; // ou a fonte que estiver usando
-import "./globals.css";
-import Sidebar from "@/components/Sidebar"; // O arquivo que acabamos de criar!
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import "./globals.css"
+import Sidebar from "@/components/Sidebar"
+import AutoLogout from "@/components/AutoLogout"
+import { Providers } from "@/components/Providers" 
+import AuthGuard from "@/components/AuthGuard"      
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "107º Grupo Escoteiro - Financeiro",
-  description: "Sistema de Gestão Financeira",
-};
+  title: "Gestão Financeira - 107º Padre Roma",
+  description: "Sistema de gestão financeira do Grupo Escoteiro",
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
     <html lang="pt-BR">
       <body className={inter.className}>
-        {/* Envolvemos os 'children' com o nosso novo Sidebar */}
-        <Sidebar>
-          {children}
-        </Sidebar>
+        <Providers>
+          <AuthGuard>
+            
+            <AutoLogout />
+            
+            <Sidebar>
+              {children}
+            </Sidebar>
+
+          </AuthGuard>
+        </Providers>
       </body>
     </html>
-  );
+  )
 }
