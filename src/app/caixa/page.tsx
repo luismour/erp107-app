@@ -11,11 +11,9 @@ export default function CaixaPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isExporting, setIsExporting] = useState(false)
   
-  // Estados de Filtro
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null)
   
-  // Estados do Modal de Lançamento
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedYouth, setSelectedYouth] = useState("")
   const [amount, setAmount] = useState("")
@@ -23,7 +21,6 @@ export default function CaixaPage() {
   const [type, setType] = useState("credit")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Estados do Modal de Simulação de Atividade
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false)
   const [activityName, setActivityName] = useState("")
   const [activityCost, setActivityCost] = useState("")
@@ -74,9 +71,6 @@ export default function CaixaPage() {
     return matchesSearch && matchesBranch
   })
 
-  // ==========================================
-  // EXPORTAÇÃO SIMPLES (SALDOS)
-  // ==========================================
   const handleExportSaldos = async () => {
     if (filteredYouths.length === 0) return alert("Nenhum jovem encontrado.")
     setIsExporting(true)
@@ -123,9 +117,6 @@ export default function CaixaPage() {
     }
   }
 
-  // ==========================================
-  // EXPORTAÇÃO INTELIGENTE (ATIVIDADE)
-  // ==========================================
   const handleExportActivity = async (e: React.FormEvent) => {
     e.preventDefault()
     if (filteredYouths.length === 0) return alert("Nenhum jovem encontrado.")
@@ -211,7 +202,6 @@ export default function CaixaPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10 px-4 min-h-screen">
       
-      {/* HEADER MELHORADO (FLEX-WRAP E ESPAÇAMENTOS) */}
       <div className="bg-[#1a1f2e] p-8 rounded-[32px] border border-slate-800 shadow-2xl flex flex-col xl:flex-row justify-between items-center gap-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
@@ -263,7 +253,6 @@ export default function CaixaPage() {
         </div>
       </div>
 
-      {/* FILTRO POR RAMO */}
       <div className="flex items-center gap-4 bg-[#0f172a] p-2 rounded-2xl border border-slate-800 overflow-x-auto w-fit mx-auto md:mx-0 shadow-lg hide-scrollbar">
         <div className="pl-3 pr-2 text-slate-600">
           <Filter size={16} />
@@ -291,7 +280,6 @@ export default function CaixaPage() {
         </div>
       </div>
 
-      {/* GRID DE CAIXAS */}
       {isLoading ? (
         <div className="flex justify-center py-20"><Loader2 className="animate-spin text-emerald-500" size={40} /></div>
       ) : filteredYouths.length === 0 ? (
@@ -330,7 +318,6 @@ export default function CaixaPage() {
         </motion.div>
       )}
 
-      {/* MODAL DE SIMULAÇÃO DE ATIVIDADE */}
       <AnimatePresence>
         {isActivityModalOpen && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -365,7 +352,6 @@ export default function CaixaPage() {
         )}
       </AnimatePresence>
 
-      {/* MODAL DE LANÇAMENTO NORMAL */}
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -389,11 +375,11 @@ export default function CaixaPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <button type="button" onClick={() => setType('credit')} className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${type === 'credit' ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'border-slate-800 bg-[#0f172a] text-slate-500 hover:border-slate-700'}`}>
+                  <button type="button" onClick={() => setType('credit')} className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${type === 'credit' ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.15)]' : 'border-slate-800 bg-[#0f172a] text-slate-500 hover:border-slate-700'}`}>
                     <TrendingUp size={24} />
                     <span className="text-[10px] font-black uppercase tracking-widest">Entrada</span>
                   </button>
-                  <button type="button" onClick={() => setType('debit')} className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${type === 'debit' ? 'border-amber-500 bg-amber-500/10 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.1)]' : 'border-slate-800 bg-[#0f172a] text-slate-500 hover:border-slate-700'}`}>
+                  <button type="button" onClick={() => setType('debit')} className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${type === 'debit' ? 'border-amber-500 bg-amber-500/10 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.15)]' : 'border-slate-800 bg-[#0f172a] text-slate-500 hover:border-slate-700'}`}>
                     <TrendingDown size={24} />
                     <span className="text-[10px] font-black uppercase tracking-widest">Saída / Uso</span>
                   </button>

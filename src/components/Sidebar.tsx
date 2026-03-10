@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { signOut } from "next-auth/react"
@@ -14,8 +15,7 @@ import {
   Menu, 
   X, 
   Bell, 
-  Tent,
-  Wallet,
+  Wallet, 
   LogOut
 } from "lucide-react"
 
@@ -27,6 +27,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
     if (isOpen) document.body.style.overflow = 'hidden'
     else document.body.style.overflow = 'unset'
   }, [isOpen])
+
   if (pathname === '/login') {
     return <main className="min-h-screen bg-[#0f172a] w-full">{children}</main>
   }
@@ -76,11 +77,20 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-[#0f172a] selection:bg-emerald-500/30">
+      
       <aside className="hidden md:flex flex-col w-72 bg-[#1a1f2e] border-r border-slate-800 fixed h-full z-40">
         <div className="p-8 flex items-center gap-4 border-b border-slate-800/50">
-          <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
-            <Tent size={24} />
+          
+          <div className="relative w-14 h-14 rounded-full overflow-hidden border-2 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.2)] shrink-0 bg-white">
+            <Image 
+              src="/logo-107.png" 
+              alt="Logo 107º Padre Roma" 
+              fill 
+              className="object-cover"
+              priority
+            />
           </div>
+
           <div>
             <h1 className="text-white font-black italic tracking-tighter text-xl leading-none">Grupo 107º</h1>
             <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">Padre Roma</p>
@@ -92,28 +102,36 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
           <NavLinks />
         </div>
 
-        <div className="p-6 border-t border-slate-800/50">
-          <div className="flex items-center justify-between bg-[#0f172a] p-4 rounded-2xl border border-slate-800">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-black text-slate-400">T</div>
-              <div>
-                <p className="text-xs font-black text-white uppercase tracking-wider">Tesouraria</p>
-                <p className="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">Online</p>
-              </div>
+        <div className="p-6 border-t border-slate-800/50 flex flex-col gap-3">
+          <div className="flex items-center gap-3 bg-[#0f172a] p-4 rounded-2xl border border-slate-800">
+            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-black text-slate-400">T</div>
+            <div>
+              <p className="text-xs font-black text-white uppercase tracking-wider">Tesouraria</p>
+              <p className="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">Online</p>
             </div>
-            <button onClick={() => signOut()} className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all" title="Sair do Sistema">
-              <LogOut size={16} />
-            </button>
           </div>
+          
+          <button 
+            onClick={() => signOut({ callbackUrl: '/login' })} 
+            className="w-full flex items-center justify-center gap-2 p-4 bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20 rounded-2xl transition-all font-black uppercase tracking-widest text-[10px]"
+          >
+            <LogOut size={16} /> Encerrar Sessão
+          </button>
         </div>
       </aside>
 
       <div className="flex-1 flex flex-col md:ml-72 transition-all duration-300">
         <header className="md:hidden flex items-center justify-between p-4 bg-[#1a1f2e] border-b border-slate-800 sticky top-0 z-40">
           <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500">
-               <Tent size={20} />
+             <div className="relative w-10 h-10 rounded-full overflow-hidden border border-emerald-500/30 bg-black shrink-0">
+               <Image 
+                 src="/logo-107.jpg" 
+                 alt="Logo 107º Padre Roma" 
+                 fill 
+                 className="object-cover"
+               />
              </div>
+
              <h1 className="text-white font-black italic tracking-tighter text-lg">Grupo 107º</h1>
           </div>
           
@@ -127,6 +145,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </header>
+
         <AnimatePresence>
           {isOpen && (
             <>
@@ -160,14 +179,18 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <div className="mt-auto pt-6 border-t border-slate-800">
-                   <button onClick={() => signOut()} className="w-full flex items-center justify-center gap-2 p-4 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500/20 transition-all font-black uppercase text-[10px] tracking-widest">
-                     <LogOut size={16} /> Sair do Sistema
+                   <button 
+                     onClick={() => signOut({ callbackUrl: '/login' })} 
+                     className="w-full flex items-center justify-center gap-2 p-4 bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20 rounded-2xl transition-all font-black uppercase tracking-widest text-[10px]"
+                   >
+                     <LogOut size={16} /> Encerrar Sessão
                    </button>
                 </div>
               </motion.div>
             </>
           )}
         </AnimatePresence>
+
         <main className="flex-1 p-2 md:p-6 w-full max-w-[100vw] overflow-x-hidden">
           {children}
         </main>

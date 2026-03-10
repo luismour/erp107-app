@@ -3,7 +3,8 @@
 import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { Tent, Lock, Mail, Loader2 } from "lucide-react"
+import Image from "next/image"
+import { Lock, Mail, Loader2 } from "lucide-react"
 import { motion } from "framer-motion"
 
 export default function LoginPage() {
@@ -28,7 +29,7 @@ export default function LoginPage() {
       setError("Email ou senha incorretos.")
       setIsLoading(false)
     } else {
-      router.push("/") // Vai para o Dashboard após logar
+      router.push("/")
       router.refresh()
     }
   }
@@ -42,10 +43,18 @@ export default function LoginPage() {
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex flex-col items-center mb-10 relative z-10">
-          <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-500 mb-4 shadow-[0_0_20px_rgba(16,185,129,0.15)]">
-            <Tent size={32} />
+          <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.2)] mb-4 bg-white p-1 shrink-0">
+            <div className="relative w-full h-full rounded-full overflow-hidden">
+              <Image 
+                src="/logo-107.png" 
+                alt="Logo 107º Padre Roma" 
+                fill 
+                className="object-cover"
+                priority
+              />
+            </div>
           </div>
-          <h1 className="text-3xl font-black text-white italic tracking-tighter uppercase">Grupo 107º</h1>
+          <h1 className="text-3xl font-black text-white italic tracking-tighter uppercase">107º/PE GEPR</h1>
           <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mt-1">Acesso Restrito</p>
         </div>
 
