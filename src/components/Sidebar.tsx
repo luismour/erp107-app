@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { Wallet } from "lucide-react" 
+import { signOut } from "next-auth/react"
 import { 
   Home, 
   PieChart, 
@@ -14,7 +14,9 @@ import {
   Menu, 
   X, 
   Bell, 
-  Tent 
+  Tent,
+  Wallet,
+  LogOut
 } from "lucide-react"
 
 export default function Sidebar({ children }: { children: React.ReactNode }) {
@@ -25,15 +27,19 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
     if (isOpen) document.body.style.overflow = 'hidden'
     else document.body.style.overflow = 'unset'
   }, [isOpen])
+  if (pathname === '/login') {
+    return <main className="min-h-screen bg-[#0f172a] w-full">{children}</main>
+  }
 
   const navItems = [
-  { name: "Início", href: "/", icon: Home },
-  { name: "Dashboard", href: "/dashboard", icon: PieChart },
-  { name: "Caixa Individual", href: "/caixa", icon: Wallet }, 
-  { name: "Mensalidades", href: "/mensalidades", icon: CreditCard },
-  { name: "Jovens", href: "/jovens", icon: Users },
-  { name: "Responsáveis", href: "/responsaveis", icon: UserCheck },
-]
+    { name: "Início", href: "/", icon: Home },
+    { name: "Dashboard", href: "/dashboard", icon: PieChart },
+    { name: "Caixa Individual", href: "/caixa", icon: Wallet },
+    { name: "Mensalidades", href: "/mensalidades", icon: CreditCard },
+    { name: "Jovens", href: "/jovens", icon: Users },
+    { name: "Responsáveis", href: "/responsaveis", icon: UserCheck },
+  ]
+
   const NavLinks = ({ mobile = false }) => (
     <div className="flex flex-col gap-2 w-full mt-6">
       {navItems.map((item) => {
@@ -51,6 +57,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
               )}
+
               <motion.div 
                 className="relative z-10"
                 whileHover={{ scale: 1.1, rotate: isActive ? 0 : -5 }}
@@ -69,7 +76,6 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-[#0f172a] selection:bg-emerald-500/30">
-      
       <aside className="hidden md:flex flex-col w-72 bg-[#1a1f2e] border-r border-slate-800 fixed h-full z-40">
         <div className="p-8 flex items-center gap-4 border-b border-slate-800/50">
           <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
@@ -81,18 +87,23 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         
-        <div className="flex-1 px-4 py-6 overflow-y-auto">
+        <div className="flex-1 px-4 py-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <p className="px-6 text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4">Menu Principal</p>
           <NavLinks />
         </div>
 
         <div className="p-6 border-t border-slate-800/50">
-          <div className="flex items-center gap-4 bg-[#0f172a] p-4 rounded-2xl border border-slate-800 cursor-pointer hover:border-slate-700 transition-colors">
-            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-black text-slate-400">T</div>
-            <div>
-              <p className="text-xs font-black text-white uppercase tracking-wider">Tesouraria</p>
-              <p className="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">Online</p>
+          <div className="flex items-center justify-between bg-[#0f172a] p-4 rounded-2xl border border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-black text-slate-400">T</div>
+              <div>
+                <p className="text-xs font-black text-white uppercase tracking-wider">Tesouraria</p>
+                <p className="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">Online</p>
+              </div>
             </div>
+            <button onClick={() => signOut()} className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all" title="Sair do Sistema">
+              <LogOut size={16} />
+            </button>
           </div>
         </div>
       </aside>
@@ -116,7 +127,6 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </header>
-
         <AnimatePresence>
           {isOpen && (
             <>
@@ -145,8 +155,14 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                   </button>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   <NavLinks mobile={true} />
+                </div>
+
+                <div className="mt-auto pt-6 border-t border-slate-800">
+                   <button onClick={() => signOut()} className="w-full flex items-center justify-center gap-2 p-4 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500/20 transition-all font-black uppercase text-[10px] tracking-widest">
+                     <LogOut size={16} /> Sair do Sistema
+                   </button>
                 </div>
               </motion.div>
             </>

@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const { Pool } = require('pg');
 const { PrismaPg } = require('@prisma/adapter-pg');
+const bcrypt = require('bcryptjs'); // Importação do gerador de senhas
 require('dotenv').config();
 
 // 1. Configurando a conexão do Postgres
@@ -16,12 +17,32 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log('🌱 Iniciando Seed - 107º Padre Roma...');
 
-  // Limpeza de segurança
+  // Limpeza de segurança (A ordem importa para evitar erros de relacionamento)
+  console.log('🧹 Limpando dados antigos...');
   await prisma.fee.deleteMany();
+  await prisma.fundTransaction.deleteMany(); // Nova tabela do Caixa
   await prisma.guardian.deleteMany();
   await prisma.youth.deleteMany();
 
+  // --- CRIAÇÃO DO USUÁRIO ADMIN (SISTEMA DE LOGIN) ---
+  console.log('🔒 Configurando usuário Administrador...');
+  const hashedPassword = await bcrypt.hash("123456", 10);
+  
+  // Usamos upsert para não dar erro caso o admin já exista se rodar o seed duas vezes
+  await prisma.user.upsert({
+    where: { email: 'admin@107.com' },
+    update: {
+      password: hashedPassword // Atualiza a senha se já existir
+    },
+    create: {
+      name: 'Tesouraria',
+      email: 'admin@107.com',
+      password: hashedPassword,
+    },
+  });
+
   // --- FAMÍLIA 1: SILVA (R$ 15 cada) ---
+  console.log('👥 Cadastrando Família Silva...');
   const telSilva = "81987665642";
   const silva1 = await prisma.youth.create({
     data: {
@@ -37,6 +58,7 @@ async function main() {
   });
 
   // --- FAMÍLIA 2: MOURA (R$ 10 cada) ---
+  console.log('👥 Cadastrando Família Moura...');
   const telMoura = "81986555681";
   const moura1 = await prisma.youth.create({
     data: {
@@ -58,6 +80,7 @@ async function main() {
   });
 
   // --- FAMÍLIA 3: OLIVEIRA (R$ 20) ---
+  console.log('👥 Cadastrando Família Oliveira...');
   const oliveira = await prisma.youth.create({
     data: {
       name: "Beatriz Oliveira", age: 7, branch: "Lobinho",
@@ -71,7 +94,7 @@ async function main() {
     { membros: [oliveira], valor: 20.0 }
   ];
 
-  console.log('💰 Gerando mensalidades...');
+  console.log('💰 Gerando mensalidades (Pagos e Pendentes)...');
 
   for (const familia of familias) {
     for (const youth of familia.membros) {
@@ -98,7 +121,7 @@ async function main() {
     }
   }
 
-  console.log('✅ Seed finalizado com sucesso!');
+  console.log('✅ Seed finalizado com sucesso! (Admin, Jovens e Mensalidades)');
 }
 
 main()
