@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma"
 export async function GET() {
   try {
     const expenses = await prisma.expense.findMany({
-      orderBy: { date: "desc" }
+      orderBy: { date: 'desc' }
     })
     return NextResponse.json(expenses)
   } catch (error) {
@@ -12,22 +12,26 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const body = await req.json()
+    const body = await request.json()
     const { description, amount, date, category } = body
 
-    const expense = await prisma.expense.create({
+    if (!description || amount === undefined || amount === "") {
+      return NextResponse.json({ error: "Descrição e valor são obrigatórios." }, { status: 400 })
+    }
+    const newExpense = await prisma.expense.create({
       data: {
-        description,
-        amount: parseFloat(amount),
-        date: new Date(date),
-        category
+        description: String(description),
+        amount: Number(amount), 
+        date: date ? new Date(date) : new Date(),
+        category: category ? String(category) : "Outros"
       }
     })
 
-    return NextResponse.json(expense)
+    return NextResponse.json(newExpense, { status: 201 })
   } catch (error) {
-    return NextResponse.json({ error: "Erro ao criar despesa" }, { status: 500 })
+    console.error("Erro ao criar despesa:", error)
+    return NextResponse.json({ error: "Erro interno ao tentar salvar a despesa." }, { status: 500 })
   }
 }

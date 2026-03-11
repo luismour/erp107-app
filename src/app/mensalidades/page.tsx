@@ -5,11 +5,14 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Search, Loader2, MessageCircle, FileSpreadsheet, CalendarDays, CreditCard, CalendarPlus, QrCode, CheckCircle } from "lucide-react"
 import BranchFilter from "@/components/BranchFilter"
 import CarneVirtual from "@/components/CarneVirtual"
+import ExcelJS from 'exceljs'
+import { saveAs } from 'file-saver'
 
 export default function MensalidadesPage() {
   const [youths, setYouths] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null)
   const [selectedCarneYouth, setSelectedCarneYouth] = useState<any | null>(null)
@@ -27,6 +30,7 @@ export default function MensalidadesPage() {
 
         return {
           ...youth,
+          allFees: youth.fees || [],
           guardianName: youth.guardians?.[0]?.name || "Responsável não cadastrado",
           mensalidade: latestFee ? {
             id: latestFee.id,
@@ -71,19 +75,15 @@ export default function MensalidadesPage() {
     }
   }
 
-  // NOVA FUNÇÃO: Confirmar Pagamento
   const handleConfirmPayment = async (feeId: string) => {
     if (!confirm("Tem certeza que deseja confirmar o pagamento desta mensalidade?")) return;
-    
     try {
       const res = await fetch(`/api/fees/${feeId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'PAGO' }) // Atualiza o status para PAGO
+        body: JSON.stringify({ status: 'PAGO' })
       });
-
       if (res.ok) {
-        // Recarrega os dados para a tela atualizar o status instantaneamente
         await loadData();
       } else {
         alert("Ocorreu um erro ao confirmar o pagamento.");
@@ -93,16 +93,124 @@ export default function MensalidadesPage() {
     }
   }
 
+  const handleExportHistory = async () => {
+    setIsExporting(true);
+    try {
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'GE 107 Padre Roma';
+      
+      const groupedByMonth: Record<string, any[]> = {}
+
+      youths.forEach(youth => {
+        if (!youth.allFees || youth.allFees.length === 0) return;
+
+        youth.allFees.forEach((fee: any) => {
+          const date = new Date(fee.dueDate)
+          const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+          const year = date.getUTCFullYear()
+          const sheetName = `${month}-${year}`
+
+          if (!groupedByMonth[sheetName]) {
+            groupedByMonth[sheetName] = []
+          }
+
+          const statusLabel = fee.status.toUpperCase() === "PAGO" || fee.status.toUpperCase() === "PAID" 
+            ? "PAGO" 
+            : (fee.status.toUpperCase() === "LATE" ? "ATRASADO" : "ABERTO")
+
+          groupedByMonth[sheetName].push({
+            name: youth.name,
+            branch: youth.branch,
+            dueDate: date.toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
+            amount: Number(fee.amount),
+            status: statusLabel
+          })
+        })
+      })
+
+      const sheetNames = Object.keys(groupedByMonth)
+      if (sheetNames.length === 0) {
+        alert("Nenhum histórico de mensalidade encontrado.")
+        setIsExporting(false);
+        return
+      }
+
+      sheetNames.sort((a, b) => {
+        const [mA, yA] = a.split('-').map(Number)
+        const [mB, yB] = b.split('-').map(Number)
+        return (yB * 12 + mB) - (yA * 12 + mA)
+      })
+
+      sheetNames.forEach(monthKey => {
+        const ws = workbook.addWorksheet(`Mensalidades ${monthKey}`);
+
+        ws.columns = [
+          { header: 'Nome do Jovem', key: 'name', width: 35 },
+          { header: 'Ramo', key: 'branch', width: 18 },
+          { header: 'Vencimento', key: 'dueDate', width: 15 },
+          { header: 'Valor Pago/Devido', key: 'amount', width: 22 },
+          { header: 'Status', key: 'status', width: 18 }
+        ];
+
+        const headerRow = ws.getRow(1);
+        headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+        headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
+        headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+        headerRow.height = 25;
+
+        ws.autoFilter = 'A1:E1';
+
+        groupedByMonth[monthKey].forEach(item => {
+          const row = ws.addRow(item);
+
+          row.getCell('amount').numFmt = '"R$" #,##0.00';
+          row.getCell('amount').alignment = { horizontal: 'right' };
+          
+          row.getCell('branch').alignment = { horizontal: 'center' };
+          row.getCell('dueDate').alignment = { horizontal: 'center' };
+
+          const statusCell = row.getCell('status');
+          statusCell.alignment = { horizontal: 'center' };
+          statusCell.font = { bold: true };
+          
+          if (item.status === 'PAGO') {
+            statusCell.font = { color: { argb: 'FF10B981' }, bold: true }; 
+          } else if (item.status === 'ATRASADO') {
+            statusCell.font = { color: { argb: 'FFEF4444' }, bold: true }; 
+          } else {
+            statusCell.font = { color: { argb: 'FFF59E0B' }, bold: true }; 
+          }
+
+          row.eachCell({ includeEmpty: true }, (cell) => {
+            cell.border = {
+              top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+            };
+          });
+        });
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      saveAs(blob, "Historico_Mensalidades_GE107.xlsx");
+
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao exportar a planilha.");
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
   const handleWhatsApp = (name: string, phone: string, amount: number) => {
     if (!phone) return
     const cleanPhone = phone.replace(/\D/g, '')
     const emojiFlor = String.fromCodePoint(0x269C, 0xFE0F);
     const emojiBarraca = String.fromCodePoint(0x26FA);
-    
     const message = `Olá! Tudo bem? ${emojiFlor} Aqui é do Grupo Escoteiro 107º Padre Roma. Passando rapidinho para lembrar que a mensalidade do(a) jovem ${name} (R$ ${amount.toFixed(2)}) encontra-se em aberto. Quando puder, dá um alô aqui para a nossa Tesouraria para a gente acertar, tá bom? Qualquer dúvida, é só falar. Muito obrigado e Sempre Alerta! ${emojiBarraca}`
-    
-    const encodedMessage = encodeURIComponent(message)
-    window.open(`https://wa.me/55${cleanPhone}?text=${encodedMessage}`, '_blank')
+    window.open(`https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank')
   }
 
   const filteredYouths = youths.filter(y => {
@@ -160,8 +268,13 @@ export default function MensalidadesPage() {
               Gerar Lote do Mês
             </button>
 
-            <button className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-2xl flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all shadow-lg shadow-emerald-500/20 w-full lg:w-auto">
-              <FileSpreadsheet size={16} /> Relatório Geral
+            <button 
+              onClick={handleExportHistory}
+              disabled={isExporting}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-2xl flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all shadow-lg shadow-emerald-500/20 w-full lg:w-auto disabled:opacity-50"
+            >
+              {isExporting ? <Loader2 size={16} className="animate-spin" /> : <FileSpreadsheet size={16} />} 
+              Histórico em Excel
             </button>
           </div>
         </div>
@@ -209,8 +322,6 @@ export default function MensalidadesPage() {
                       </td>
                       <td className="px-10 py-6 text-right">
                         <div className="flex items-center justify-end gap-3">
-                          
-                          {/* BOTÃO NOVO: Dar Baixa (Só aparece se a mensalidade existir e NÃO estiver paga) */}
                           {youth.mensalidade.id && !isPaid && youth.mensalidade.status !== "SEM REGISTRO" && (
                             <button 
                               onClick={() => handleConfirmPayment(youth.mensalidade.id)}
@@ -220,7 +331,6 @@ export default function MensalidadesPage() {
                               <CheckCircle size={14} />
                             </button>
                           )}
-
                           <button 
                             onClick={() => setSelectedCarneYouth(youth)}
                             title="Abrir Carnê Virtual"
@@ -228,7 +338,6 @@ export default function MensalidadesPage() {
                           >
                             <QrCode size={14} />
                           </button>
-
                           {isPending && youth.mensalidade.phone && (
                             <button 
                               onClick={() => handleWhatsApp(youth.name, youth.mensalidade.phone, youth.mensalidade.amount)}

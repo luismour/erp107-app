@@ -5,28 +5,35 @@ import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { 
   LayoutDashboard, Wallet, TrendingDown, AlertTriangle, 
-  Users, Activity, ArrowRight, Loader2, PiggyBank 
+  Users, Activity, ArrowRight, Loader2, PiggyBank, FileSpreadsheet 
 } from "lucide-react"
+import ExcelJS from 'exceljs'
+import { saveAs } from 'file-saver'
 
 export default function DashboardPage() {
   const router = useRouter()
   const [youths, setYouths] = useState<any[]>([])
   const [expenses, setExpenses] = useState<any[]>([])
+  const [inventory, setInventory] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isExporting, setIsExporting] = useState(false)
 
   async function loadData() {
     setIsLoading(true)
     try {
-      const [youthRes, expRes] = await Promise.all([
+      const [youthRes, expRes, invRes] = await Promise.all([
         fetch("/api/youth").catch(() => ({ json: () => [] })),
-        fetch("/api/expenses").catch(() => ({ json: () => [] }))
+        fetch("/api/expenses").catch(() => ({ json: () => [] })),
+        fetch("/api/inventory").catch(() => ({ json: () => [] }))
       ])
       
       const youthData = await youthRes.json()
       const expData = await expRes.json()
+      const invData = await invRes.json()
       
       setYouths(Array.isArray(youthData) ? youthData : [])
       setExpenses(Array.isArray(expData) ? expData : [])
+      setInventory(Array.isArray(invData) ? invData : [])
     } catch (error) {
       console.error("Erro ao carregar dashboard", error)
     } finally {
@@ -36,7 +43,198 @@ export default function DashboardPage() {
 
   useEffect(() => { loadData() }, [])
 
-  // Efetivo do Grupo
+  const handleExportGeneralReport = async () => {
+    setIsExporting(true)
+    try {
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'GE 107 Padre Roma';
+
+      const formatHeaderAndBorders = (ws: ExcelJS.Worksheet) => {
+        const headerRow = ws.getRow(1);
+        headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+        headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
+        headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+        headerRow.height = 25;
+        ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: ws.columns.length } };
+
+        ws.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+          if (rowNumber > 1) {
+            row.eachCell({ includeEmpty: true }, (cell) => {
+              cell.border = {
+                top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+              };
+            });
+          }
+        });
+      };
+
+      const wsEfetivo = workbook.addWorksheet("Efetivo");
+      wsEfetivo.columns = [
+        { header: 'Nome do Jovem', key: 'name', width: 35 },
+        { header: 'Idade', key: 'age', width: 10 },
+        { header: 'Ramo', key: 'branch', width: 15 },
+        { header: 'Data de Entrada', key: 'date', width: 18 }
+      ];
+      youths.forEach(y => {
+        const row = wsEfetivo.addRow({
+          name: y.name,
+          age: y.age,
+          branch: y.branch,
+          date: new Date(y.createdAt).toLocaleDateString('pt-BR')
+        });
+        row.getCell('age').alignment = { horizontal: 'center' };
+        row.getCell('branch').alignment = { horizontal: 'center' };
+        row.getCell('date').alignment = { horizontal: 'center' };
+      });
+      formatHeaderAndBorders(wsEfetivo);
+
+      const wsContatos = workbook.addWorksheet("Contatos");
+      wsContatos.columns = [
+        { header: 'Nome do Responsável', key: 'guardianName', width: 35 },
+        { header: 'Telefone', key: 'phone', width: 20 },
+        { header: 'Jovem', key: 'youthName', width: 35 },
+        { header: 'Ramo', key: 'branch', width: 15 }
+      ];
+      youths.forEach(y => {
+        if (y.guardians) {
+          y.guardians.forEach((g: any) => {
+            const row = wsContatos.addRow({
+              guardianName: g.name,
+              phone: g.phone,
+              youthName: y.name,
+              branch: y.branch
+            });
+            row.getCell('phone').alignment = { horizontal: 'center' };
+            row.getCell('branch').alignment = { horizontal: 'center' };
+          });
+        }
+      });
+      formatHeaderAndBorders(wsContatos);
+
+      const wsCaixa = workbook.addWorksheet("Caixa Individual");
+      wsCaixa.columns = [
+        { header: 'Jovem', key: 'name', width: 35 },
+        { header: 'Ramo', key: 'branch', width: 15 },
+        { header: 'Saldo Disponível', key: 'saldo', width: 20 }
+      ];
+      youths.forEach(y => {
+        const saldo = y.funds?.reduce((acc: number, curr: any) => acc + (curr.type === 'credit' ? curr.amount : -curr.amount), 0) || 0;
+        const row = wsCaixa.addRow({ name: y.name, branch: y.branch, saldo: saldo });
+        row.getCell('branch').alignment = { horizontal: 'center' };
+        row.getCell('saldo').numFmt = '"R$" #,##0.00';
+        row.getCell('saldo').font = { bold: true, color: { argb: saldo >= 0 ? 'FF10B981' : 'FFEF4444' } };
+      });
+      formatHeaderAndBorders(wsCaixa);
+
+      const wsMensalidades = workbook.addWorksheet("Mensalidades");
+      wsMensalidades.columns = [
+        { header: 'Jovem', key: 'name', width: 35 },
+        { header: 'Ramo', key: 'branch', width: 15 },
+        { header: 'Vencimento', key: 'dueDate', width: 15 },
+        { header: 'Valor Pago/Devido', key: 'amount', width: 22 },
+        { header: 'Status', key: 'status', width: 18 }
+      ];
+      
+      let taxas: any[] = [];
+      youths.forEach(y => {
+        if (y.fees) {
+          y.fees.forEach((f: any) => taxas.push({ ...f, youthName: y.name, branch: y.branch }));
+        }
+      });
+      taxas.sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
+
+      taxas.forEach(fee => {
+        const statusLabel = fee.status.toUpperCase() === "PAGO" || fee.status.toUpperCase() === "PAID" 
+          ? "PAGO" : (fee.status.toUpperCase() === "LATE" ? "ATRASADO" : "ABERTO");
+          
+        const row = wsMensalidades.addRow({
+          name: fee.youthName,
+          branch: fee.branch,
+          dueDate: new Date(fee.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
+          amount: Number(fee.amount),
+          status: statusLabel
+        });
+
+        row.getCell('branch').alignment = { horizontal: 'center' };
+        row.getCell('dueDate').alignment = { horizontal: 'center' };
+        row.getCell('amount').numFmt = '"R$" #,##0.00';
+        
+        const statusCell = row.getCell('status');
+        statusCell.alignment = { horizontal: 'center' };
+        statusCell.font = { bold: true };
+        if (statusLabel === 'PAGO') statusCell.font = { color: { argb: 'FF10B981' }, bold: true };
+        else if (statusLabel === 'ATRASADO') statusCell.font = { color: { argb: 'FFEF4444' }, bold: true };
+        else statusCell.font = { color: { argb: 'FFF59E0B' }, bold: true };
+      });
+      formatHeaderAndBorders(wsMensalidades);
+
+      const wsDespesas = workbook.addWorksheet("Despesas");
+      wsDespesas.columns = [
+        { header: 'Data', key: 'date', width: 15 },
+        { header: 'Descrição', key: 'desc', width: 40 },
+        { header: 'Categoria', key: 'cat', width: 20 },
+        { header: 'Valor Gasto', key: 'amount', width: 18 }
+      ];
+      expenses.forEach(e => {
+        const row = wsDespesas.addRow({
+          date: new Date(e.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }),
+          desc: e.description,
+          cat: e.category,
+          amount: Number(e.amount)
+        });
+        row.getCell('date').alignment = { horizontal: 'center' };
+        row.getCell('cat').alignment = { horizontal: 'center' };
+        row.getCell('amount').numFmt = '"-R$" #,##0.00';
+        row.getCell('amount').font = { color: { argb: 'FFEF4444' }, bold: true }; 
+      });
+      formatHeaderAndBorders(wsDespesas);
+
+      const wsAlmoxarifado = workbook.addWorksheet("Almoxarifado");
+      wsAlmoxarifado.columns = [
+        { header: 'Material', key: 'name', width: 35 },
+        { header: 'Categoria', key: 'cat', width: 20 },
+        { header: 'Estado', key: 'cond', width: 15 },
+        { header: 'Físico Total', key: 'total', width: 15 },
+        { header: 'Emprestado', key: 'borrowed', width: 15 },
+        { header: 'Disponível', key: 'avail', width: 15 },
+        { header: 'Localização', key: 'loc', width: 25 }
+      ];
+      inventory.forEach(i => {
+        const row = wsAlmoxarifado.addRow({
+          name: i.name,
+          cat: i.category,
+          cond: i.condition,
+          total: i.quantity,
+          borrowed: i.borrowed || 0,
+          avail: i.quantity - (i.borrowed || 0),
+          loc: i.location || "Sede"
+        });
+        row.getCell('cat').alignment = { horizontal: 'center' };
+        row.getCell('cond').alignment = { horizontal: 'center' };
+        row.getCell('total').alignment = { horizontal: 'center' };
+        row.getCell('borrowed').alignment = { horizontal: 'center' };
+        row.getCell('avail').alignment = { horizontal: 'center' };
+        
+        if (i.condition === 'NOVO') row.getCell('cond').font = { color: { argb: 'FF10B981' }, bold: true };
+        else if (i.condition === 'MANUTENCAO') row.getCell('cond').font = { color: { argb: 'FFEF4444' }, bold: true };
+      });
+      formatHeaderAndBorders(wsAlmoxarifado);
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const dataAtual = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+      saveAs(blob, `Relatorio_Geral_GE107_${dataAtual}.xlsx`);
+
+    } catch (error) {
+      console.error(error)
+      alert("Erro de conexão ao tentar exportar o relatório geral.")
+    } finally {
+      setIsExporting(false)
+    }
+  }
   const totalYouths = youths.length
   const branchCounts = {
     Lobinho: youths.filter(y => y.branch === "Lobinho").length,
@@ -45,47 +243,37 @@ export default function DashboardPage() {
     Pioneiro: youths.filter(y => y.branch === "Pioneiro").length,
   }
 
-  // Despesas Reais - Convertendo com segurança
   const totalExpenses = expenses.reduce((acc, curr) => {
     const amount = typeof curr.amount === 'string' ? parseFloat(curr.amount) : Number(curr.amount) || 0
     return acc + amount
   }, 0)
 
-  // Caixas Individuais Reais - Convertendo com segurança
   const caixaIndividualTotal = youths.reduce((acc, youth) => {
     const youthTotal = youth.funds?.reduce((sum: number, fund: any) => {
       const amount = typeof fund.amount === 'string' ? parseFloat(fund.amount) : Number(fund.amount) || 0
-      return sum + amount
+      return sum + (fund.type === 'credit' ? amount : -amount) 
     }, 0) || 0
     return acc + youthTotal
   }, 0)
 
-  // Mensalidades e Inadimplência Reais
   let inadimplentes = 0
   let valorInadimplente = 0
   let receitasPagas = 0
 
   youths.forEach(youth => {
     const fees = youth.fees || []
-    
     fees.forEach((f: any) => {
-      // Padroniza o status para letras maiúsculas para não ter erro de digitação
       const status = String(f.status || '').toUpperCase().trim()
-      
-      // Converte o Decimal do Prisma para número válido no JS
       const amount = typeof f.amount === 'string' ? parseFloat(f.amount) : Number(f.amount) || 0
-
       if (status === 'PAGO' || status === 'PAID') {
         receitasPagas += amount
-      } 
-      else if (status === 'ABERTO' || status === 'PENDING' || status === 'LATE') {
+      } else if (status === 'ABERTO' || status === 'PENDING' || status === 'LATE') {
         inadimplentes++
         valorInadimplente += amount
       }
     })
   })
 
-  // Saldo Atual Real (Total de Mensalidades Pagas - Total de Despesas do Grupo)
   const saldoAtual = receitasPagas - totalExpenses
 
   if (isLoading) {
@@ -100,11 +288,23 @@ export default function DashboardPage() {
     <div className="space-y-6 max-w-7xl mx-auto pb-10 px-4 min-h-screen">
       <div className="bg-[#1a1f2e] p-8 rounded-[32px] border border-slate-800 shadow-2xl relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+        
         <div className="relative z-10">
           <h1 className="text-4xl font-black text-white italic tracking-tighter uppercase">Painel de Controle</h1>
           <p className="text-slate-500 font-bold text-[10px] tracking-[0.3em] uppercase mt-1 flex items-center gap-2">
             <LayoutDashboard size={14} className="text-emerald-500" /> Visão Geral do Grupo 107º
           </p>
+        </div>
+
+        <div className="relative z-10 w-full md:w-auto">
+          <button 
+            onClick={handleExportGeneralReport}
+            disabled={isExporting}
+            className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-4 rounded-2xl flex items-center justify-center gap-3 font-black uppercase text-[11px] tracking-widest transition-all shadow-xl shadow-emerald-500/20 w-full md:w-auto disabled:opacity-50"
+          >
+            {isExporting ? <Loader2 size={18} className="animate-spin" /> : <FileSpreadsheet size={18} />} 
+            {isExporting ? "A Gerar Excel..." : "Baixar Relatório Geral"}
+          </button>
         </div>
       </div>
 
