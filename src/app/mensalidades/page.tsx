@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Search, Loader2, MessageCircle, FileSpreadsheet, CalendarDays, CreditCard, CalendarPlus, QrCode } from "lucide-react"
+import { Search, Loader2, MessageCircle, FileSpreadsheet, CalendarDays, CreditCard, CalendarPlus, QrCode, CheckCircle } from "lucide-react"
 import BranchFilter from "@/components/BranchFilter"
 import CarneVirtual from "@/components/CarneVirtual"
 
@@ -68,6 +68,28 @@ export default function MensalidadesPage() {
       alert("Erro de conexão ao tentar gerar mensalidades.");
     } finally {
       setIsGenerating(false);
+    }
+  }
+
+  // NOVA FUNÇÃO: Confirmar Pagamento
+  const handleConfirmPayment = async (feeId: string) => {
+    if (!confirm("Tem certeza que deseja confirmar o pagamento desta mensalidade?")) return;
+    
+    try {
+      const res = await fetch(`/api/fees/${feeId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'PAGO' }) // Atualiza o status para PAGO
+      });
+
+      if (res.ok) {
+        // Recarrega os dados para a tela atualizar o status instantaneamente
+        await loadData();
+      } else {
+        alert("Ocorreu um erro ao confirmar o pagamento.");
+      }
+    } catch (error) {
+      alert("Erro de conexão com o servidor.");
     }
   }
 
@@ -162,52 +184,68 @@ export default function MensalidadesPage() {
                   <tr><td colSpan={4} className="py-20 text-center"><Loader2 className="animate-spin mx-auto text-emerald-500" size={32} /></td></tr>
                 ) : filteredYouths.length === 0 ? (
                   <tr><td colSpan={4} className="py-20 text-center text-slate-500 font-bold uppercase tracking-widest">Nenhum registro encontrado</td></tr>
-                ) : filteredYouths.map((youth) => (
-                  <tr key={youth.id} className="group hover:bg-[#1e293b]/50 transition-all">
-                    <td className="px-10 py-6 flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-[#0f172a] border border-slate-800 flex items-center justify-center text-slate-500 shrink-0">
-                        <CreditCard size={18} />
-                      </div>
-                      <div>
-                        <p className="font-black text-slate-100 text-sm uppercase tracking-tight">{youth.name}</p>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">{youth.branch}</p>
-                      </div>
-                    </td>
-                    <td className="px-10 py-6">
-                      <p className="text-slate-400 font-bold italic">{youth.mensalidade.dueDate}</p>
-                    </td>
-                    <td className="px-10 py-6">
-                      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusStyle(youth.mensalidade.status)}`}>
-                        {getStatusText(youth.mensalidade.status)}
-                      </span>
-                    </td>
-                    <td className="px-10 py-6 text-right">
-                      <div className="flex items-center justify-end gap-3">
-                        
-                        <button 
-                          onClick={() => setSelectedCarneYouth(youth)}
-                          title="Abrir Carnê Virtual"
-                          className="w-8 h-8 rounded-full bg-emerald-500/10 hover:bg-emerald-500 border border-emerald-500/20 hover:border-emerald-500 text-emerald-500 hover:text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
-                        >
-                          <QrCode size={14} />
-                        </button>
+                ) : filteredYouths.map((youth) => {
+                  const isPaid = youth.mensalidade.status.toUpperCase() === "PAGO" || youth.mensalidade.status.toUpperCase() === "PAID";
+                  const isPending = youth.mensalidade.status.toUpperCase() === "ABERTO" || youth.mensalidade.status.toUpperCase() === "PENDING" || youth.mensalidade.status.toUpperCase() === "LATE";
+                  
+                  return (
+                    <tr key={youth.id} className="group hover:bg-[#1e293b]/50 transition-all">
+                      <td className="px-10 py-6 flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-[#0f172a] border border-slate-800 flex items-center justify-center text-slate-500 shrink-0">
+                          <CreditCard size={18} />
+                        </div>
+                        <div>
+                          <p className="font-black text-slate-100 text-sm uppercase tracking-tight">{youth.name}</p>
+                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">{youth.branch}</p>
+                        </div>
+                      </td>
+                      <td className="px-10 py-6">
+                        <p className="text-slate-400 font-bold italic">{youth.mensalidade.dueDate}</p>
+                      </td>
+                      <td className="px-10 py-6">
+                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${getStatusStyle(youth.mensalidade.status)}`}>
+                          {getStatusText(youth.mensalidade.status)}
+                        </span>
+                      </td>
+                      <td className="px-10 py-6 text-right">
+                        <div className="flex items-center justify-end gap-3">
+                          
+                          {/* BOTÃO NOVO: Dar Baixa (Só aparece se a mensalidade existir e NÃO estiver paga) */}
+                          {youth.mensalidade.id && !isPaid && youth.mensalidade.status !== "SEM REGISTRO" && (
+                            <button 
+                              onClick={() => handleConfirmPayment(youth.mensalidade.id)}
+                              title="Confirmar Pagamento (Dar Baixa)"
+                              className="w-8 h-8 rounded-full bg-blue-500/10 hover:bg-blue-500 border border-blue-500/20 hover:border-blue-500 text-blue-500 hover:text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                            >
+                              <CheckCircle size={14} />
+                            </button>
+                          )}
 
-                        {(youth.mensalidade.status.toUpperCase() === "ABERTO" || youth.mensalidade.status.toUpperCase() === "PENDING" || youth.mensalidade.status.toUpperCase() === "LATE") && youth.mensalidade.phone && (
                           <button 
-                            onClick={() => handleWhatsApp(youth.name, youth.mensalidade.phone, youth.mensalidade.amount)}
-                            title="Cobrar via WhatsApp"
-                            className="w-8 h-8 rounded-full bg-amber-500/10 hover:bg-amber-500 border border-amber-500/20 hover:border-amber-500 text-amber-500 hover:text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                            onClick={() => setSelectedCarneYouth(youth)}
+                            title="Abrir Carnê Virtual"
+                            className="w-8 h-8 rounded-full bg-emerald-500/10 hover:bg-emerald-500 border border-emerald-500/20 hover:border-emerald-500 text-emerald-500 hover:text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
                           >
-                            <MessageCircle size={14} />
+                            <QrCode size={14} />
                           </button>
-                        )}
-                        <p className="font-black text-white text-lg italic min-w-[80px]">
-                          R$ {youth.mensalidade.amount.toFixed(2)}
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+
+                          {isPending && youth.mensalidade.phone && (
+                            <button 
+                              onClick={() => handleWhatsApp(youth.name, youth.mensalidade.phone, youth.mensalidade.amount)}
+                              title="Cobrar via WhatsApp"
+                              className="w-8 h-8 rounded-full bg-amber-500/10 hover:bg-amber-500 border border-amber-500/20 hover:border-amber-500 text-amber-500 hover:text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                            >
+                              <MessageCircle size={14} />
+                            </button>
+                          )}
+                          <p className="font-black text-white text-lg italic min-w-[80px]">
+                            R$ {youth.mensalidade.amount.toFixed(2)}
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -222,7 +260,7 @@ export default function MensalidadesPage() {
             amount={selectedCarneYouth.mensalidade.amount}
             dueDate={selectedCarneYouth.mensalidade.dueDate}
             guardianName={selectedCarneYouth.guardianName}
-            phone={selectedCarneYouth.mensalidade.phone} 
+            phone={selectedCarneYouth.mensalidade.phone}
             onClose={() => setSelectedCarneYouth(null)}
           />
         )}
