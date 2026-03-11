@@ -17,7 +17,8 @@ import {
   Bell, 
   Wallet, 
   LogOut,
-  TrendingDown
+  TrendingDown,
+  Package
 } from "lucide-react"
 
 export default function Sidebar({ children }: { children: React.ReactNode }) {
@@ -41,6 +42,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
     { name: "Despesas", href: "/despesas", icon: TrendingDown },
     { name: "Jovens", href: "/jovens", icon: Users },
     { name: "Responsáveis", href: "/responsaveis", icon: UserCheck },
+    { name: "Almoxarifado", href: "/inventario", icon: Package }, // <-- ADICIONADO AQUI
   ]
 
   const NavLinks = ({ mobile = false }) => (
