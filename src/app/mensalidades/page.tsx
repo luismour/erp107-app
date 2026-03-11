@@ -62,9 +62,6 @@ export default function MensalidadesPage() {
     return matchesBranch && matchesSearch
   })
 
-  // ==========================================
-  // EXPORTAÇÃO: RELATÓRIO CONSOLIDADO (4 ABAS)
-  // ==========================================
   const handleExportConsolidado = async () => {
     setIsExporting(true)
     try {
@@ -79,9 +76,6 @@ export default function MensalidadesPage() {
         row.height = 30
       }
 
-      // ---------------------------------------------------------
-      // ABA 1: INADIMPLENTES
-      // ---------------------------------------------------------
       const wsInadimplentes = workbook.addWorksheet('Cobranças Pendentes')
       wsInadimplentes.columns = [
         { header: 'JOVEM', key: 'youth', width: 35 },
@@ -118,9 +112,6 @@ export default function MensalidadesPage() {
         })
       }
 
-      // ---------------------------------------------------------
-      // ABA 2: RECEITAS
-      // ---------------------------------------------------------
       const wsReceitas = workbook.addWorksheet('Fechamento de Receitas')
       wsReceitas.columns = [
         { header: 'MÊS REF.', key: 'ref', width: 15 },
@@ -162,14 +153,10 @@ export default function MensalidadesPage() {
         totalRowRec.getCell('amount').font = { color: { argb: 'FF059669' }, bold: true, size: 14 }
       }
 
-      // BUSCA DOS DADOS DO CAIXA INDIVIDUAL
       const resYouths = await fetch("/api/youth")
       const youths = await resYouths.json()
       const filteredYouths = selectedBranch ? youths.filter((y: any) => y.branch === selectedBranch) : youths
 
-      // ---------------------------------------------------------
-      // ABA 3: SALDOS DO CAIXA (RESUMO)
-      // ---------------------------------------------------------
       const wsCaixa = workbook.addWorksheet('Saldos do Caixa')
       wsCaixa.columns = [
         { header: 'JOVEM', key: 'youth', width: 35 },
@@ -177,7 +164,7 @@ export default function MensalidadesPage() {
         { header: 'QTD MOVIMENTAÇÕES', key: 'transactions', width: 25 },
         { header: 'SALDO DISPONÍVEL', key: 'balance', width: 25 }
       ]
-      styleHeader(wsCaixa.getRow(1), 'FF3B82F6') // Azul
+      styleHeader(wsCaixa.getRow(1), 'FF3B82F6') 
 
       let totalCaixa = 0
 
@@ -207,9 +194,6 @@ export default function MensalidadesPage() {
       totalRowCaixa.getCell('balance').font = { color: { argb: 'FF3B82F6' }, bold: true, size: 14 }
       totalRowCaixa.getCell('balance').alignment = { vertical: 'middle' }
 
-      // ---------------------------------------------------------
-      // ABA 4: EXTRATO DETALHADO (LINHA DO TEMPO)
-      // ---------------------------------------------------------
       const wsExtrato = workbook.addWorksheet('Extrato Detalhado')
       wsExtrato.columns = [
         { header: 'DATA', key: 'date', width: 15 },
@@ -219,9 +203,8 @@ export default function MensalidadesPage() {
         { header: 'MOTIVO / DESCRIÇÃO', key: 'description', width: 45 },
         { header: 'VALOR', key: 'amount', width: 20 }
       ]
-      styleHeader(wsExtrato.getRow(1), 'FFA855F7') // Roxo (Purple)
+      styleHeader(wsExtrato.getRow(1), 'FFA855F7') 
 
-      // Junta todas as movimentações de todos os jovens filtrados
       let todasMovimentacoes: any[] = []
       filteredYouths.forEach((youth: any) => {
         if (youth.funds) {
@@ -234,8 +217,6 @@ export default function MensalidadesPage() {
           })
         }
       })
-
-      // Ordena da mais recente para a mais antiga (ordem cronológica reversa)
       todasMovimentacoes.sort((a, b) => new Date(b.createdAt || new Date()).getTime() - new Date(a.createdAt || new Date()).getTime())
 
       if (todasMovimentacoes.length === 0) {
@@ -250,7 +231,7 @@ export default function MensalidadesPage() {
             branch: mov.branch,
             type: isCredit ? 'ENTRADA' : 'SAÍDA / USO',
             description: mov.description || '-',
-            amount: isCredit ? mov.amount : -mov.amount // Mostra negativo se for saída
+            amount: isCredit ? mov.amount : -mov.amount 
           })
 
           row.alignment = { vertical: 'middle' }
@@ -265,9 +246,6 @@ export default function MensalidadesPage() {
         })
       }
 
-      // ---------------------------------------------------------
-      // GERAÇÃO DO ARQUIVO FINAL
-      // ---------------------------------------------------------
       const buffer = await workbook.xlsx.writeBuffer()
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
       const today = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')
@@ -284,7 +262,6 @@ export default function MensalidadesPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10 px-4 min-h-screen">
       
-      {/* HEADER CARD */}
       <div className="bg-[#1a1f2e] p-8 rounded-[32px] border border-slate-800 shadow-2xl flex flex-col xl:flex-row justify-between items-center gap-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
@@ -307,7 +284,6 @@ export default function MensalidadesPage() {
             />
           </div>
           
-          {/* BOTÃO ÚNICO DE RELATÓRIO CONSOLIDADO */}
           <button 
             onClick={handleExportConsolidado}
             disabled={isExporting}

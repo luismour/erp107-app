@@ -16,7 +16,8 @@ import {
   X, 
   Bell, 
   Wallet, 
-  LogOut
+  LogOut,
+  TrendingDown
 } from "lucide-react"
 
 export default function Sidebar({ children }: { children: React.ReactNode }) {
@@ -37,6 +38,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
     { name: "Dashboard", href: "/dashboard", icon: PieChart },
     { name: "Caixa Individual", href: "/caixa", icon: Wallet },
     { name: "Mensalidades", href: "/mensalidades", icon: CreditCard },
+    { name: "Despesas", href: "/despesas", icon: TrendingDown },
     { name: "Jovens", href: "/jovens", icon: Users },
     { name: "Responsáveis", href: "/responsaveis", icon: UserCheck },
   ]
@@ -77,18 +79,18 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-[#0f172a] selection:bg-emerald-500/30">
-      
       <aside className="hidden md:flex flex-col w-72 bg-[#1a1f2e] border-r border-slate-800 fixed h-full z-40">
         <div className="p-8 flex items-center gap-4 border-b border-slate-800/50">
-          
-          <div className="relative w-14 h-14 rounded-full overflow-hidden border-2 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.2)] shrink-0 bg-white">
-            <Image 
-              src="/logo-107.png" 
-              alt="Logo 107º Padre Roma" 
-              fill 
-              className="object-cover"
-              priority
-            />
+          <div className="w-14 h-14 rounded-full bg-white border-2 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.2)] flex items-center justify-center shrink-0">
+            <div className="relative w-12 h-12 rounded-full overflow-hidden">
+              <Image 
+                src="/logo-107.png" 
+                alt="Logo 107º Padre Roma" 
+                fill 
+                className="object-cover"
+                priority
+              />
+            </div>
           </div>
 
           <div>
@@ -102,36 +104,40 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
           <NavLinks />
         </div>
 
-        <div className="p-6 border-t border-slate-800/50 flex flex-col gap-3">
-          <div className="flex items-center gap-3 bg-[#0f172a] p-4 rounded-2xl border border-slate-800">
-            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-black text-slate-400">T</div>
-            <div>
-              <p className="text-xs font-black text-white uppercase tracking-wider">Tesouraria</p>
-              <p className="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">Online</p>
+        <div className="p-6 border-t border-slate-800/50">
+          <div className="flex items-center justify-between bg-[#0f172a] p-4 rounded-2xl border border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-black text-slate-400">T</div>
+              <div>
+                <p className="text-xs font-black text-white uppercase tracking-wider">Tesouraria</p>
+                <p className="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">Online</p>
+              </div>
             </div>
+            
+            <button 
+              onClick={() => signOut({ callbackUrl: '/login' })} 
+              title="Encerrar Sessão"
+              className="p-2.5 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+            >
+              <LogOut size={18} />
+            </button>
           </div>
-          
-          <button 
-            onClick={() => signOut({ callbackUrl: '/login' })} 
-            className="w-full flex items-center justify-center gap-2 p-4 bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20 rounded-2xl transition-all font-black uppercase tracking-widest text-[10px]"
-          >
-            <LogOut size={16} /> Encerrar Sessão
-          </button>
         </div>
       </aside>
 
       <div className="flex-1 flex flex-col md:ml-72 transition-all duration-300">
         <header className="md:hidden flex items-center justify-between p-4 bg-[#1a1f2e] border-b border-slate-800 sticky top-0 z-40">
           <div className="flex items-center gap-3">
-             <div className="relative w-10 h-10 rounded-full overflow-hidden border border-emerald-500/30 bg-black shrink-0">
-               <Image 
-                 src="/logo-107.jpg" 
-                 alt="Logo 107º Padre Roma" 
-                 fill 
-                 className="object-cover"
-               />
+             <div className="w-10 h-10 rounded-full bg-white border border-emerald-500/30 flex items-center justify-center shrink-0">
+               <div className="relative w-8 h-8 rounded-full overflow-hidden">
+                 <Image 
+                   src="/logo-107.jpg" 
+                   alt="Logo 107º Padre Roma" 
+                   fill 
+                   className="object-cover"
+                 />
+               </div>
              </div>
-
              <h1 className="text-white font-black italic tracking-tighter text-lg">Grupo 107º</h1>
           </div>
           
@@ -179,12 +185,23 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <div className="mt-auto pt-6 border-t border-slate-800">
-                   <button 
-                     onClick={() => signOut({ callbackUrl: '/login' })} 
-                     className="w-full flex items-center justify-center gap-2 p-4 bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20 rounded-2xl transition-all font-black uppercase tracking-widest text-[10px]"
-                   >
-                     <LogOut size={16} /> Encerrar Sessão
-                   </button>
+                  <div className="flex items-center justify-between bg-[#0f172a] p-4 rounded-2xl border border-slate-800">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-black text-slate-400">T</div>
+                      <div>
+                        <p className="text-xs font-black text-white uppercase tracking-wider">Tesouraria</p>
+                        <p className="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">Online</p>
+                      </div>
+                    </div>
+                    
+                    <button 
+                      onClick={() => signOut({ callbackUrl: '/login' })} 
+                      title="Encerrar Sessão"
+                      className="p-2.5 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                    >
+                      <LogOut size={18} />
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             </>
