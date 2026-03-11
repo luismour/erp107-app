@@ -45,12 +45,18 @@ export default function DashboardPage() {
     Pioneiro: youths.filter(y => y.branch === "Pioneiro").length,
   }
 
-  // Despesas Reais
-  const totalExpenses = expenses.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0)
+  // Despesas Reais - Convertendo com segurança
+  const totalExpenses = expenses.reduce((acc, curr) => {
+    const amount = typeof curr.amount === 'string' ? parseFloat(curr.amount) : Number(curr.amount) || 0
+    return acc + amount
+  }, 0)
 
-  // Caixas Individuais Reais (Soma todos os fundos de todos os jovens)
+  // Caixas Individuais Reais - Convertendo com segurança
   const caixaIndividualTotal = youths.reduce((acc, youth) => {
-    const youthTotal = youth.funds?.reduce((sum: number, fund: any) => sum + (Number(fund.amount) || 0), 0) || 0
+    const youthTotal = youth.funds?.reduce((sum: number, fund: any) => {
+      const amount = typeof fund.amount === 'string' ? parseFloat(fund.amount) : Number(fund.amount) || 0
+      return sum + amount
+    }, 0) || 0
     return acc + youthTotal
   }, 0)
 
@@ -60,16 +66,26 @@ export default function DashboardPage() {
   let receitasPagas = 0
 
   youths.forEach(youth => {
-    const pendingFees = youth.fees?.filter((f: any) => f.status === 'ABERTO') || []
-    const paidFees = youth.fees?.filter((f: any) => f.status === 'PAGO') || []
-
-    if (pendingFees.length > 0) inadimplentes++
+    const fees = youth.fees || []
     
-    valorInadimplente += pendingFees.reduce((sum: number, f: any) => sum + (Number(f.amount) || 0), 0)
-    receitasPagas += paidFees.reduce((sum: number, f: any) => sum + (Number(f.amount) || 0), 0)
+    fees.forEach((f: any) => {
+      // Padroniza o status para letras maiúsculas para não ter erro de digitação
+      const status = String(f.status || '').toUpperCase().trim()
+      
+      // Converte o Decimal do Prisma para número válido no JS
+      const amount = typeof f.amount === 'string' ? parseFloat(f.amount) : Number(f.amount) || 0
+
+      if (status === 'PAGO' || status === 'PAID') {
+        receitasPagas += amount
+      } 
+      else if (status === 'ABERTO' || status === 'PENDING' || status === 'LATE') {
+        inadimplentes++
+        valorInadimplente += amount
+      }
+    })
   })
 
-  // Saldo Atual Real (Mensalidades Pagas - Despesas do Grupo)
+  // Saldo Atual Real (Total de Mensalidades Pagas - Total de Despesas do Grupo)
   const saldoAtual = receitasPagas - totalExpenses
 
   if (isLoading) {
@@ -99,9 +115,12 @@ export default function DashboardPage() {
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${saldoAtual < 0 ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'}`}><Wallet size={24} /></div>
           </div>
           <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Saldo Atual (Grupo)</h3>
-          <p className={`text-3xl font-black italic tracking-tighter ${saldoAtual < 0 ? 'text-red-500' : 'text-white'}`}>
+          <p className={`text-3xl font-black italic tracking-tighter ${saldoAtual < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
             R$ {saldoAtual.toFixed(2)}
           </p>
+          <div className="mt-2 flex gap-2 text-[9px] font-bold uppercase tracking-widest">
+            <span className="text-emerald-500/70">Entradas: R$ {receitasPagas.toFixed(2)}</span>
+          </div>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-[#1a1f2e] border border-slate-800 p-6 rounded-[28px] relative overflow-hidden group hover:border-blue-500/30 transition-all">
@@ -117,9 +136,9 @@ export default function DashboardPage() {
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-red-500/5 rounded-full blur-2xl group-hover:bg-red-500/10 transition-all" />
           <div className="flex justify-between items-start mb-4">
             <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500"><AlertTriangle size={24} /></div>
-            <span className="text-[10px] font-black text-red-500 uppercase tracking-widest bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">{inadimplentes} Jovens</span>
+            <span className="text-[10px] font-black text-red-500 uppercase tracking-widest bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">{inadimplentes} Pendências</span>
           </div>
-          <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Inadimplência</h3>
+          <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">A Receber</h3>
           <p className="text-3xl font-black text-white italic tracking-tighter">R$ {valorInadimplente.toFixed(2)}</p>
         </motion.div>
 
