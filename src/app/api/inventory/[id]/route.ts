@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    const id = params.id
+    const params = await context.params;
+    const id = params.id;
+    
     const body = await request.json()
     const { name, description, category, condition, quantity, location } = body
 
@@ -25,10 +27,11 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ error: "Erro ao atualizar o material" }, { status: 500 })
   }
 }
-
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    const id = params.id
+    const params = await context.params;
+    const id = params.id;
+    
     await prisma.inventoryItem.delete({
       where: { id }
     })
