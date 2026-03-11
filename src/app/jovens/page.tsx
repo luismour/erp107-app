@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Users, Search, Plus, Loader2, X, Trash2, User, Phone } from "lucide-react"
-
+import BranchFilter from "@/components/BranchFilter"
 export default function JovensPage() {
   const [youths, setYouths] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -93,13 +93,8 @@ export default function JovensPage() {
           </button>
         </div>
       </div>
-
-      <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
-        <button onClick={() => setSelectedBranch(null)} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${!selectedBranch ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500' : 'bg-[#1a1f2e] border-slate-800 text-slate-500 hover:border-slate-700'}`}>Todos</button>
-        {branches.map(b => (
-          <button key={b} onClick={() => setSelectedBranch(b)} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${selectedBranch === b ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500' : 'bg-[#1a1f2e] border-slate-800 text-slate-500 hover:border-slate-700'}`}>{b}</button>
-        ))}
-      </div>
+      
+      <BranchFilter selectedBranch={selectedBranch} onSelect={setSelectedBranch} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading ? (

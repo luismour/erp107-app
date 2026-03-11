@@ -1,7 +1,7 @@
 interface Props {
   title: string
   value: string
-  className?: string // Permite passar classes extra do Tailwind
+  className?: string 
 }
 
 export default function DashboardCard({ title, value, className = "" }: Props) {
