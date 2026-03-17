@@ -1,9 +1,15 @@
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 import { sanitizePhone } from "@/lib/utils"
+import { getServerSession } from "next-auth"
 
 export async function GET() {
   try {
+    const session = await getServerSession()
+    if (!session) {
+      return NextResponse.json({ error: "Acesso Negado. Não autorizado." }, { status: 401 })
+    }
+
     const youths = await prisma.youth.findMany({
       orderBy: {
         createdAt: 'desc' 
@@ -24,8 +30,12 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json()
+    const session = await getServerSession()
+    if (!session) {
+      return NextResponse.json({ error: "Acesso Negado. Não autorizado." }, { status: 401 })
+    }
 
+    const body = await req.json()
     const cleanPhone = sanitizePhone(body.guardianPhone);
 
     const youth = await prisma.youth.create({

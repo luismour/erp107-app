@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server"
 import { generateMonthlyFees, getBusinessDay } from "@/services/feeService"
+import { getServerSession } from "next-auth";
 
 export async function GET(request: Request) {
+  const session = await getServerSession()
   const authHeader = request.headers.get('authorization');
   
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {

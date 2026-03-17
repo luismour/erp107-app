@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server"
 import { generateMonthlyFees } from "@/services/feeService"
+import { getServerSession } from "next-auth"
 
 export async function POST() {
-
+  const session = await getServerSession()
   const now = new Date()
 
   const month = now.getMonth() + 1

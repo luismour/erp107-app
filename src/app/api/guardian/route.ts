@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { getServerSession } from "next-auth";
 
 export async function GET() {
   try {
+    const session = await getServerSession()
     const guardians = await prisma.guardian.findMany({
       include: {
         youth: true 
@@ -21,6 +23,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession()
     const body = await req.json();
     
     const guardian = await prisma.guardian.create({

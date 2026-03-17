@@ -1,44 +1,54 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { getServerSession } from "next-auth"
 
-export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
+export async function GET() {
   try {
-    const params = await context.params;
-    const id = params.id;
+    const session = await getServerSession()
+    if (!session) {
+      return NextResponse.json({ error: "Acesso Negado. Não autorizado." }, { status: 401 })
+    }
+
+    const items = await prisma.inventoryItem.findMany({
+      orderBy: { name: 'asc' } 
+    })
     
+    return NextResponse.json(items)
+  } catch (error) {
+    console.error("Erro ao buscar inventário:", error)
+    return NextResponse.json({ error: "Erro ao buscar materiais do almoxarifado" }, { status: 500 })
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const session = await getServerSession()
+    if (!session) {
+      return NextResponse.json({ error: "Acesso Negado. Não autorizado." }, { status: 401 })
+    }
+
     const body = await request.json()
     const { name, description, category, condition, quantity, location } = body
 
-    const updatedItem = await prisma.inventoryItem.update({
-      where: { id },
+    if (!name || !category) {
+      return NextResponse.json({ error: "Nome e Categoria são obrigatórios." }, { status: 400 })
+    }
+
+    const newItem = await prisma.inventoryItem.create({
       data: {
         name,
         description,
         category,
-        condition,
+        condition: condition || "BOM",
+        quantity: Number(quantity) || 1,
         location,
-        quantity: Number(quantity)
+        borrowed: 0, 
       }
     })
 
-    return NextResponse.json(updatedItem)
+    return NextResponse.json(newItem, { status: 201 })
   } catch (error) {
-    console.error("Erro ao atualizar item:", error)
-    return NextResponse.json({ error: "Erro ao atualizar o material" }, { status: 500 })
-  }
-}
-export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
-  try {
-    const params = await context.params;
-    const id = params.id;
-    
-    await prisma.inventoryItem.delete({
-      where: { id }
-    })
-
-    return NextResponse.json({ message: "Item excluído com sucesso" })
-  } catch (error) {
-    console.error("Erro ao excluir item:", error)
-    return NextResponse.json({ error: "Erro ao excluir o material" }, { status: 500 })
+    console.error("Erro ao criar item no inventário:", error)
+    return NextResponse.json({ error: "Erro ao cadastrar material" }, { status: 500 })
   }
 }

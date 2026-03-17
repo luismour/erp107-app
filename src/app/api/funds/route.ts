@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
 
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession()
     const body = await req.json()
 
     const transaction = await prisma.fundTransaction.create({

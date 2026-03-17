@@ -52,11 +52,14 @@ model FundTransaction {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String   
-  createdAt DateTime @default(now())
+  id             String    @id @default(uuid())
+  name           String
+  email          String    @unique
+  password       String   
+  role           String    @default("CHEFE")
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime? 
+  createdAt      DateTime  @default(now())
 }
 
 model Expense {
