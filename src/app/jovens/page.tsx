@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Users, Search, Plus, Loader2, X, Trash2, User, Phone } from "lucide-react"
 import BranchFilter from "@/components/BranchFilter"
+
 export default function JovensPage() {
   const [youths, setYouths] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -36,6 +37,36 @@ export default function JovensPage() {
   }
 
   useEffect(() => { loadData() }, [])
+
+  // NOVA FUNÇÃO: Atualiza a idade e o Ramo automaticamente!
+  const handleAgeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const ageValue = e.target.value;
+    const ageNum = parseInt(ageValue);
+    
+    let autoBranch = formData.branch; // Mantém o atual se for inválido
+    
+    if (!isNaN(ageNum)) {
+      if (ageNum >= 6 && ageNum <= 9) {
+        autoBranch = "Lobinho";
+      } else if (ageNum >= 10 && ageNum <= 14) {
+        autoBranch = "Escoteiro";
+      } else if (ageNum >= 15 && ageNum <= 17) {
+        autoBranch = "Sênior";
+      } else if (ageNum >= 18 && ageNum <= 22) {
+        autoBranch = "Pioneiro";
+      } else {
+        autoBranch = ""; // Limpa se for fora das idades escoteiras
+      }
+    } else {
+      autoBranch = ""; // Limpa se apagar o campo
+    }
+
+    setFormData({
+      ...formData,
+      age: ageValue,
+      branch: autoBranch
+    });
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -72,6 +103,7 @@ export default function JovensPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10 px-4 min-h-screen">
+      {/* CABEÇALHO */}
       <div className="bg-[#1a1f2e] p-8 rounded-[32px] border border-slate-800 shadow-2xl flex flex-col xl:flex-row justify-between items-center gap-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 text-center xl:text-left w-full xl:w-auto">
@@ -128,21 +160,41 @@ export default function JovensPage() {
                 <h2 className="text-2xl font-black text-white italic tracking-tighter uppercase">Novo Jovem</h2>
                 <button onClick={() => setIsModalOpen(false)} className="text-slate-500 hover:text-red-500 p-2 bg-[#0f172a] border border-slate-800 rounded-xl"><X size={20} /></button>
               </div>
+              
               <form onSubmit={handleSubmit} className="space-y-4">
                 <input required placeholder="Nome Completo" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-[#0f172a] border border-slate-800 rounded-2xl p-4 text-slate-200 outline-none focus:border-emerald-500/50 text-sm font-medium" />
+                
+                {/* IDADE VEM PRIMEIRO, RAMO PREENCHE AUTOMÁTICO */}
                 <div className="grid grid-cols-2 gap-4">
-                  <select required value={formData.branch} onChange={e => setFormData({...formData, branch: e.target.value})} className="bg-[#0f172a] border border-slate-800 rounded-2xl p-4 text-slate-200 outline-none text-xs font-bold uppercase">
-                    <option value="">Ramo</option>
+                  <input 
+                    required 
+                    type="number" 
+                    placeholder="Idade (Ex: 12)" 
+                    min="6" max="22" 
+                    value={formData.age} 
+                    onChange={handleAgeChange} 
+                    className="bg-[#0f172a] border border-slate-800 rounded-2xl p-4 text-slate-200 outline-none focus:border-emerald-500/50 text-sm font-medium" 
+                  />
+                  
+                  <select 
+                    required 
+                    disabled
+                    value={formData.branch} 
+                    className="bg-[#0f172a] border border-slate-800 rounded-2xl p-4 text-slate-200 outline-none text-xs font-bold uppercase opacity-60 cursor-not-allowed"
+                  >
+                    <option value="">Ramo Auto.</option>
                     {branches.map(b => <option key={b} value={b}>{b}</option>)}
                   </select>
-                  <input required type="number" placeholder="Idade" min="6" max="21" value={formData.age} onChange={e => setFormData({...formData, age: e.target.value})} className="bg-[#0f172a] border border-slate-800 rounded-2xl p-4 text-slate-200 outline-none text-sm font-medium" />
                 </div>
+
                 <input required placeholder="Nome do Responsável" value={formData.guardianName} onChange={e => setFormData({...formData, guardianName: e.target.value})} className="w-full bg-[#0f172a] border border-slate-800 rounded-2xl p-4 text-slate-200 outline-none focus:border-emerald-500/50 text-sm font-medium" />
                 <input required placeholder="Telefone (81 9...)" value={formData.guardianPhone} onChange={e => setFormData({...formData, guardianPhone: e.target.value})} className="w-full bg-[#0f172a] border border-slate-800 rounded-2xl p-4 text-slate-200 outline-none focus:border-emerald-500/50 text-sm font-medium" />
+                
                 <button type="submit" disabled={isSubmitting} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase tracking-widest text-xs p-4 rounded-2xl disabled:opacity-50 mt-4 shadow-lg">
                   {isSubmitting ? <Loader2 className="animate-spin mx-auto" size={18} /> : "Cadastrar Jovem"}
                 </button>
               </form>
+
             </motion.div>
           </div>
         )}
