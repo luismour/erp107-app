@@ -2,53 +2,58 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 
-export async function GET() {
+export async function PUT(
+  request: Request,
+  props: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await getServerSession()
     if (!session) {
-      return NextResponse.json({ error: "Acesso Negado. Não autorizado." }, { status: 401 })
+      return NextResponse.json({ error: "Acesso Negado." }, { status: 401 })
     }
 
-    const items = await prisma.inventoryItem.findMany({
-      orderBy: { name: 'asc' } 
-    })
-    
-    return NextResponse.json(items)
-  } catch (error) {
-    console.error("Erro ao buscar inventário:", error)
-    return NextResponse.json({ error: "Erro ao buscar materiais do almoxarifado" }, { status: 500 })
-  }
-}
-
-export async function POST(request: Request) {
-  try {
-    const session = await getServerSession()
-    if (!session) {
-      return NextResponse.json({ error: "Acesso Negado. Não autorizado." }, { status: 401 })
-    }
+    const params = await props.params;
+    const itemId = params.id;
 
     const body = await request.json()
-    const { name, description, category, condition, quantity, location } = body
+    // AGORA RECEBE O CAMPO OWNER (Responsável)
+    const { name, description, category, condition, quantity, location, borrowed, owner } = body
 
-    if (!name || !category) {
-      return NextResponse.json({ error: "Nome e Categoria são obrigatórios." }, { status: 400 })
-    }
-
-    const newItem = await prisma.inventoryItem.create({
+    const updatedItem = await prisma.inventoryItem.update({
+      where: { id: itemId },
       data: {
         name,
         description,
         category,
-        condition: condition || "BOM",
-        quantity: Number(quantity) || 1,
+        condition,
+        quantity: quantity !== undefined ? Number(quantity) : undefined,
         location,
-        borrowed: 0, 
+        borrowed: borrowed !== undefined ? Number(borrowed) : undefined,
+        owner: owner !== undefined ? String(owner) : null, 
       }
     })
 
-    return NextResponse.json(newItem, { status: 201 })
+    return NextResponse.json(updatedItem, { status: 200 })
   } catch (error) {
-    console.error("Erro ao criar item no inventário:", error)
-    return NextResponse.json({ error: "Erro ao cadastrar material" }, { status: 500 })
+    console.error("Erro ao atualizar material:", error)
+    return NextResponse.json({ error: "Erro interno ao atualizar material" }, { status: 500 })
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  props: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession()
+    if (!session) return NextResponse.json({ error: "Acesso Negado." }, { status: 401 })
+
+    const params = await props.params;
+    const itemId = params.id;
+
+    await prisma.inventoryItem.delete({ where: { id: itemId } })
+    return NextResponse.json({ message: "Material excluído com sucesso." }, { status: 200 })
+  } catch (error) {
+    return NextResponse.json({ error: "Erro interno ao excluir material" }, { status: 500 })
   }
 }
