@@ -7,8 +7,8 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-   const session = await getServerSession()
   try {
+    const session = await getServerSession()
     const { id } = await params;
     const body = await request.json();
 

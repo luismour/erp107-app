@@ -18,6 +18,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession()
     const body = await request.json()
     const { name, description, category, condition, quantity, location } = body
 
