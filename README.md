@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ⚜️ ERP - Grupo Escoteiro 107º Padre Roma
 
-## Getting Started
+![Next.js](https://img.shields.io/badge/Next.js-16.1-black?style=for-the-badge&logo=next.js)
+![React](https://img.shields.io/badge/React-19.2-blue?style=for-the-badge&logo=react)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-38B2AC?style=for-the-badge&logo=tailwind-css)
+![Prisma ORM](https://img.shields.io/badge/Prisma-7.4-2D3748?style=for-the-badge&logo=prisma)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql)
 
-First, run the development server:
+Sistema de Gestão Integrada (ERP) desenvolvido exclusivamente para a Diretoria e Tesouraria do Grupo Escoteiro 107º Padre Roma. O sistema centraliza o controle financeiro, gestão do efetivo (jovens e responsáveis) e logística (almoxarifado) com segurança de nível bancário.
 
+---
+
+## 🚀 Principais Funcionalidades
+
+### 👥 Módulo de Efetivo (Jovens)
+* Cadastro completo de jovens com cálculo automático do Ramo (Lobinho, Escoteiro, Sênior, Pioneiro) baseado na idade.
+* Registro de dados de contato dos responsáveis.
+* Visualização rápida de distribuição do efetivo por seção no Dashboard.
+
+### 💰 Módulo Financeiro (Tesouraria)
+* **Mensalidades:** Geração de lote de mensalidades, controle de status (Aberto, Pago, Atrasado), "baixa" rápida de pagamentos.
+* **Cobrança Inteligente:** Geração de mensagem automática de cobrança via WhatsApp para responsáveis inadimplentes.
+* **Carnê Virtual:** Emissão de "Carnê Virtual" com QR Code PIX na tela.
+* **Despesas:** Lançamento de saídas e gastos operacionais do grupo.
+* **Caixa Individual:** Controle de fundos individuais de cada jovem (créditos e débitos para acampamentos e atividades).
+
+### 📦 Módulo de Logística (Almoxarifado)
+* Cadastro de materiais de patrulha e sede (barracas, lampiões, ferramentas).
+* Controle de condição (Novo, Bom, Manutenção) e localização.
+* Rastreio de itens físicos totais vs. emprestados.
+
+### 📊 Relatórios Avançados (ExcelJS)
+* **Histórico de Mensalidades:** Exportação em Excel separada automaticamente por abas mensais (ex: 03-2026), com formatação contábil e cores de status.
+* **Relatório Geral (Diretoria):** O Dashboard gera um super-relatório com 6 abas simultâneas (Efetivo, Contatos, Caixa Individual, Mensalidades, Despesas, Almoxarifado), com colunas ajustadas, tipografia profissional e tabelas coloridas.
+
+---
+
+## 🔐 Arquitetura de Segurança (Nível Bancário)
+
+Sendo uma aplicação que lida com dados de menores e finanças, a segurança foi priorizada em todas as camadas:
+
+1. **Proxy/Middleware (Next.js 16):** Blindagem total que impede acesso a qualquer página interna sem autenticação, redirecionando invasores para o `/login`.
+2. **Proteção de APIs:** Todas as rotas da pasta `/api` possuem verificação de sessão (`getServerSession`).
+3. **Zod Validation (Anti-Injeção):** Todos os dados recebidos do cliente passam por uma "alfândega" rígida de validação de schemas (Zod) antes de tocarem no banco de dados, impedindo XSS e SQL Injection.
+4. **Proteção contra Força Bruta (Rate Limiting):** Sistema de *Account Lockout* integrado no banco de dados. Após 5 tentativas de login com senha errada, a conta é bloqueada por 15 minutos.
+5. **Auto-Logout por Inatividade:** Componente de segurança que encerra a sessão e limpa os tokens se o usuário ficar inativo por 15 minutos.
+6. **Security Headers:** Configurações no `next.config.ts` contra Clickjacking e Sniffing (Strict-Transport-Security, X-Frame-Options, etc.).
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+* **Frontend:** Next.js 16 (App Router), React 19, Tailwind CSS v4, Framer Motion (Animações), Lucide React (Ícones).
+* **Backend:** Next.js Server Actions & API Routes, NextAuth.js (Autenticação JWT com Bcrypt).
+* **Banco de Dados:** PostgreSQL (via Supabase), Prisma ORM (Tipagem e Migrations).
+* **Ferramentas:** Zod (Validação de Dados), ExcelJS & File-Saver (Geração avançada de relatórios em `.xlsx`).
+
+---
+
+## ⚙️ Como Executar o Projeto Localmente
+
+### 1. Pré-requisitos
+* Node.js (v18 ou superior)
+* Um banco de dados PostgreSQL (pode usar o Supabase gratuitamente)
+
+### 2. Instalação
+Clone o repositório e instale as dependências:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+git clone [https://github.com/luismour/erp107-app.git](https://github.com/luismour/erp107-app.git)
+cd erp107-app
+npm install
