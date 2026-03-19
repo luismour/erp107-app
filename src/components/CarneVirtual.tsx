@@ -75,9 +75,6 @@ export default function CarneVirtual({ youthName, branch, amount, dueDate, guard
         `}
       </style>
 
-      {/* ========================================= */}
-      {/* 1. VISUAL DO ECRÃ (MODAL ESCURO COM NEON) */}
-      {/* ========================================= */}
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 print:hidden">
         <motion.div 
           initial={{ opacity: 0, scale: 0.95, y: 20 }} 
@@ -196,10 +193,6 @@ export default function CarneVirtual({ youthName, branch, amount, dueDate, guard
       </div>
 
 
-      {/* ========================================= */}
-      {/* 2. ELEMENTO INVISÍVEL PARA GERAR O PDF E IMPRIMIR */}
-      {/* ========================================= */}
-      {/* Agora a classe que esconde (-left-[9999px]) está no contentor-pai, deixando o #carne-render limpo! */}
       <div className="absolute -left-[9999px] -top-[9999px] print:static print:left-auto print:top-auto">
         <div 
           id="carne-render" 
