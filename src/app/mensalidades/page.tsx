@@ -49,14 +49,12 @@ export default function MensalidadesPage() {
     if (fee.status === 'paid') return 'paid'
     
     const today = new Date()
-    today.setUTCHours(0, 0, 0, 0) 
-    
+    today.setUTCHours(0, 0, 0, 0)
     const dueDate = new Date(fee.dueDate)
     dueDate.setUTCHours(0, 0, 0, 0)
     
     if (dueDate < today) return 'overdue'
-    
-    return 'pending' 
+    return 'pending'
   }
 
   const uniqueYouths = Array.from(
@@ -85,24 +83,15 @@ export default function MensalidadesPage() {
   }
 
   const handleGenerateMonthlyFees = async () => {
-    if (!confirm("Deseja gerar as mensalidades para TODOS os jovens no mês atual? O sistema aplicará os descontos para irmãos automaticamente.")) return
-
+    if (!confirm("Deseja gerar as mensalidades? O sistema aplicará os descontos automaticamente.")) return
     setIsGeneratingMonthly(true)
     try {
       const res = await fetch("/api/fees/generate", { method: "POST" })
       const data = await res.json()
-      
-      if (res.ok) {
-        alert(data.message)
-        await loadData()
-      } else {
-        alert(data.error || "Erro ao gerar as mensalidades.")
-      }
-    } catch (error) {
-      alert("Erro de conexão ao tentar gerar mensalidades.")
-    } finally {
-      setIsGeneratingMonthly(false)
-    }
+      if (res.ok) { alert(data.message); await loadData() }
+      else alert(data.error || "Erro ao gerar as mensalidades.")
+    } catch (error) { alert("Erro de conexão ao tentar gerar mensalidades.") }
+    finally { setIsGeneratingMonthly(false) }
   }
 
   const handleGenerateCarneExcel = async (e: React.FormEvent) => {
@@ -155,7 +144,6 @@ export default function MensalidadesPage() {
         if (fee) {
           amount = fee.amount
           dueDate = new Date(fee.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
-
           const computed = getComputedStatus(fee)
           if (computed === 'paid') { statusLabel = 'PAGO'; statusColor = 'FF059669'; }
           else if (computed === 'overdue') { statusLabel = 'ATRASADO'; statusColor = 'FFDC2626'; }
@@ -180,17 +168,20 @@ export default function MensalidadesPage() {
     }
   }
 
-  const filteredFees = fees.filter(fee => {
+  const dashboardFees = fees.filter(fee => {
     const matchesSearch = fee.youth?.name.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "ALL" ? true : getComputedStatus(fee) === statusFilter
     const matchesMonth = monthFilter === "ALL" ? true : fee.month.toString() === monthFilter
     const matchesYear = yearFilter === "ALL" ? true : fee.year.toString() === yearFilter
-    return matchesSearch && matchesStatus && matchesMonth && matchesYear
+    return matchesSearch && matchesMonth && matchesYear
   })
 
-  const totalRecebido = filteredFees.filter(f => getComputedStatus(f) === 'paid').reduce((acc, curr) => acc + Number(curr.amount), 0)
-  const totalPendente = filteredFees.filter(f => getComputedStatus(f) === 'pending').reduce((acc, curr) => acc + Number(curr.amount), 0)
-  const totalAtrasado = filteredFees.filter(f => getComputedStatus(f) === 'overdue').reduce((acc, curr) => acc + Number(curr.amount), 0)
+  const totalRecebido = dashboardFees.filter(f => getComputedStatus(f) === 'paid').reduce((acc, curr) => acc + Number(curr.amount), 0)
+  const totalPendente = dashboardFees.filter(f => getComputedStatus(f) === 'pending').reduce((acc, curr) => acc + Number(curr.amount), 0)
+  const totalAtrasado = dashboardFees.filter(f => getComputedStatus(f) === 'overdue').reduce((acc, curr) => acc + Number(curr.amount), 0)
+
+  const filteredFees = dashboardFees.filter(fee => {
+    return statusFilter === "ALL" ? true : getComputedStatus(fee) === statusFilter
+  })
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10 px-4 min-h-screen">
@@ -214,18 +205,10 @@ export default function MensalidadesPage() {
           </div>
           
           <div className="flex gap-2 w-full lg:w-auto">
-            <button 
-              onClick={handleGenerateMonthlyFees}
-              disabled={isGeneratingMonthly}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-2xl flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all shadow-lg shadow-blue-600/20 whitespace-nowrap disabled:opacity-50"
-            >
+            <button onClick={handleGenerateMonthlyFees} disabled={isGeneratingMonthly} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-2xl flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all shadow-lg shadow-blue-600/20 whitespace-nowrap disabled:opacity-50">
               {isGeneratingMonthly ? <Loader2 size={16} className="animate-spin" /> : <PlusCircle size={16} />} Gerar Faturas
             </button>
-
-            <button 
-              onClick={() => setIsCarneModalOpen(true)}
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-2xl flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all shadow-lg shadow-emerald-600/20 whitespace-nowrap"
-            >
+            <button onClick={() => setIsCarneModalOpen(true)} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-2xl flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-widest transition-all shadow-lg shadow-emerald-600/20 whitespace-nowrap">
               <BookOpen size={16} /> Excel Anual
             </button>
           </div>
