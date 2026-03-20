@@ -5,6 +5,7 @@ import Sidebar from "@/components/Sidebar"
 import AutoLogout from "@/components/AutoLogout"
 import { Providers } from "@/components/Providers" 
 import AuthGuard from "@/components/AuthGuard"      
+import { ThemeProvider } from "@/components/ThemeProvider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -19,19 +20,22 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-BR">
-      <body className={inter.className}>
-        <Providers>
-          <AuthGuard>
-            
-            <AutoLogout />
-            
-            <Sidebar>
-              {children}
-            </Sidebar>
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body className={`${inter.className} bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-slate-100 transition-colors duration-300`}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <Providers>
+            <AuthGuard>
+              
+              <AutoLogout />
+              
+              <Sidebar>
+                {children}
+              </Sidebar>
 
-          </AuthGuard>
-        </Providers>
+            </AuthGuard>
+          </Providers>
+        </ThemeProvider>
+
       </body>
     </html>
   )
